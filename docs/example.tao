@@ -1,0 +1,145 @@
+''Comentário de uma linha
+
+
+''Linguagem: Tao
+''Arquivos .tao, exemplos: main.tao, tree.tao, list.tao
+
+'''  Comentário multi linha, começa 
+     e encerra com 3 ou mais apóstrofos. '''
+    
+'''
+
+Compilado dos significados de cada trigrama e hexagrama
+
+Trigramas:
+7 ||| céu       ☰ criação, força
+6 ||: lago      ☱ felicidade, abertura, reflexão
+5 |:| fogo      ☲ radiância, iluminação
+4 |:: trovão    ☳ abalo, perturbação
+3 :|| vento     ☴ gentileza, pervasividade
+2 :|: água      ☵ abismo, perigo, movimento
+1 ::| montanha  ☶ completude, estabilidade
+0 ::: terra     ☷ receptividade, produção
+
+||| exportar módulo
+||: importar módulos
+|:| casamento de padrão
+|:: liberar memória
+:|| repetição
+:|: condicional
+::| alocar memória
+::: tipos
+
+Hexagramas:
+63 |||||| ䷀ criação, força
+62 |||||: ䷪ deslocamento, quebra
+61 ||||:| ䷍ grandes posses
+60 ||||:: ䷡ grande força
+59 |||:|| ䷈ pequena acumulação
+58 |||:|: ䷄ espera
+57 |||::| ䷙ grande acumulação
+56 |||::: ䷊ paz
+
+55 ||:||| ䷉ continuidade
+54 ||:||: ䷹ felicidade, abertura, reflexão
+53 ||:|:| ䷥ polarização, oposição
+52 ||:|:: ䷵ conformar-se
+51 ||::|| ䷼ verdade interior
+50 ||::|: ䷻ articulação, moderação, limitação
+49 ||:::| ䷨ decrescimento, diminuição
+48 ||:::: ䷒ aproximação
+
+47 |:|||| ䷌ concordância
+46 |:|||: ䷰ revolução
+45 |:||:| ䷝ radiância, iluminação
+44 |:||:: ䷶ abundância
+43 |:|:|| ䷤ família
+42 |:|:|: ䷾ resolvido, pós completude
+41 |:|::| ䷕ graça, luxo
+40 |:|::: ䷣ iluminação ocultada
+
+39 |::||| ䷘ inocência
+38 |::||: ䷐ seguir
+37 |::|:| ䷔ mordida
+36 |::|:: ䷲ abalo, perturbação
+35 |:::|| ䷩ aumento, crescimento
+34 |:::|: ䷂ brotamento
+33 |::::| ䷚ engolir
+32 |::::: ䷗ retorno
+
+31 :||||| ䷫ encontro
+30 :||||: ䷛ grande excesso
+29 :|||:| ䷱ caldeirão
+28 :|||:: ䷟ perseverança
+27 :||:|| ䷸ gentileza, pervasividade
+26 :||:|: ䷯ poço, fundo
+25 :||::| ䷑ correção
+24 :||::: ䷭ ascensão
+
+23 :|:||| ䷅ discussão, conflito
+22 :|:||: ䷮ opressão
+21 :|:|:| ䷿ incompletude
+20 :|:|:: ䷧ resolução, separação
+19 :|::|| ䷺ dispersão
+18 :|::|: ䷜ abismo
+17 :|:::| ䷃ envolvimento
+16 :|:::: ䷆ liderança, exército
+
+15 ::|||| ䷠ retirada
+14 ::|||: ䷞ conjunção, influência
+13 ::||:| ䷷ viagem, travessia
+12 ::||:: ䷽ pequeno excesso
+11 ::|:|| ䷴ desenvolvimento gradual
+10 ::|:|: ䷦ obstrução
+ 9 ::|::| ䷳ estabilidade
+ 8 ::|::: ䷎ humildade
+ 
+ 7 :::||| ䷋ estagnação
+ 6 :::||: ䷬ agrupamento
+ 5 :::|:| ䷢ prosperidade, progresso
+ 4 :::|:: ䷏ entusiasmo, excesso
+ 3 ::::|| ䷓ contemplação
+ 2 ::::|: ䷇ aliança
+ 1 :::::| ䷖ partir, arrancar
+ 0 :::::: ䷁ receptividade
+
+'''
+
+'' declara o nome deste módulo e quais funções, variáveis, tipos, etc ele exporta
+||| This.Module.Name |||::: Tree, add ||||||
+
+'' importa de um módulo
+||: Math ||::|| sin, cos, tan
+
+'' importa de um módulo dando um nome de acesso
+||: SQLite3 ||:||: SQL
+
+'' yang define função, essa é de uma linha apenas
+yang add(x: Real, y: Real): Real = x + y
+
+
+'' @ antes de nome de tipo indica ponteiro
+::: Tree K T = Node(key: K, lt: @Tree K T, rt: @Tree K T), Leaf(item: T)
+
+'' ::::|| declara parâmetros de tipo pra definição que vier a seguir
+::::|| K, T
+wuji printLeaves(tree: @Tree K T) {
+	
+  |:| tree
+  |:|||| Node(k, l, r) -> {
+    postOrder(l)
+    postOrder(r)
+  }
+  |:|||| Leaf(item) -> print(item)
+}
+
+
+
+''Keyword `wuji` declara/define subprograma (retorno void)
+wuji main() {
+  yin x: Int = 0 ''Keyword `yin` declara/define variável
+  yin y: Int = 2
+  yin z: Int = x * y
+  
+  
+}
