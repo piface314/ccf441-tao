@@ -106,7 +106,7 @@ Hexagramas:
 '''
 
 '' declara o nome deste módulo e quais funções, variáveis, tipos, etc ele exporta
-||| This.Module.Name |||::: Tree, add ||||||
+||| This.Module.Name |||::: Tree, add
 
 '' importa de um módulo
 ||: Math ||::|| sin, cos, tan
@@ -115,25 +115,47 @@ Hexagramas:
 ||: SQLite3 ||:||: SQL
 
 '' yang define função, essa é de uma linha apenas
-yang add(x: Real, y: Real): Real = x + y
-
+yang sum(x: Real, y: Real): Real = x + y
 
 '' @ antes de nome de tipo indica ponteiro
-::: Tree K T = Node(key: K, lt: @Tree K T, rt: @Tree K T), Leaf(item: T)
+::: Tree(K, T) = Node(key: K, lt: @Tree(K,T), rt: @Tree(K,T)), Leaf(item: T)
 
 '' ::::|| declara parâmetros de tipo pra definição que vier a seguir
 ::::|| K, T
-wuji printLeaves(tree: @Tree K T) {
-	
-  |:| tree
-  |:|||| Node(k, l, r) -> {
-    postOrder(l)
-    postOrder(r)
+wuji printLeaves(tree: @Tree(K, T)) {
+	'' expressão match
+  |:| @tree
+  |:|||| Node(k, l, r) |:|:|: {
+    printLeaves(l)
+    printLeaves(r)
   }
-  |:|||| Leaf(item) -> print(item)
+  |:|||| Leaf(item) |:|:|: print(item)
 }
 
 
+
+::::|| K, T
+yang add(item: T, tree: @Tree K T): @Tree K T = {
+  yin itemKey: K = getKey(item)
+  yin newLeaf: @Tree K T = ::| Leaf(item)
+  |:| @tree
+  |:|||| Node(k, l, r) |:|:|:
+    '' :|: = if
+    '' :|:|:: = then
+    '' :|::|: = elif
+    '' :|::|| = else
+    :|: itemKey < k :|:|::
+      tree.lt = add(item, l)
+    :|::||
+      tree.rt = add(item, r)
+  |:|||| Leaf(i) |:|:|: {
+    yin leafKey: K = getKey(i)
+    :|: itemKey < leafKey :|:|::
+      ::| Node(leafKey, newLeaf, tree)
+    :|::||
+      ::| Node(itemKey, tree, newLeaf)
+  }
+}
 
 ''Keyword `wuji` declara/define subprograma (retorno void)
 wuji main() {
