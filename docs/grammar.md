@@ -23,25 +23,32 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
 
 ## Definição
 ```
-<program> ::= <module-decl> <stmt-list>
-<module-decl> ::= {Trig7} <pro-id> {Hex56} <export-list> {Endl} | ""
-<export-list> ::= <export-list> "," <id> | <id>
-<stmt-list> ::= <stmt-list> {Endl} <stmt> | <stmt>
+<program> ::= <module-decl> <stmts>
+<module-decl> ::= {Trig7} <pro-id> {Hex56} <exports> {Endl} | ""
+<exports> ::= <export> "," <id> | <id>
+<stmts> ::= <stmts> {Endl} <stmt> | <stmt>
 <stmt> ::= <import>
-         | <var-def>
-         | <func-def>
-         | <op-def>
-         | <proc-def>
+         | <definition>
+         | <def-type-params> <definition>
+         | ""
 <import> ::= {Trig6} <pro-id>
            | {Trig6} <pro-id> {Hex51} <export-list>
-           | {Trig6} <pro-id> {Hex54} {ProID}
+           | {Trig6} <pro-id> {Hex54} {ProID} 
+<def-type-params> ::= {Hex03} <type-params>
+<definition> ::= <var-def>
+               | <func-def>
+               | <op-def>
+               | <proc-def>
 <var-def> ::= "yin" {ComID} ":" <type-id> "=" <expr>
 <func-def> ::= "yang" {ComID} "(" <param-list> ")" ":" <type-id> "=" <expr>  
-<op-def> ::= "yang" {SymID} "(" <param> "," <param> ")" ":" <type-id> "=" <expr>
+<op-def> ::= "yang" <op-assoc> {Digit} {SymID} "(" <param> "," <param> ")" ":" <type-id> "=" <expr>
+<op-assoc> ::= {Hex04} | {Hex05} | {Hex06}
 <proc-def> ::= "wuji" {ComID} "(" <param-list> ")" <block>
 <param-list> ::= <params> | ""
 <params> ::= <params> "," <param> | <param>
-<param> ::= {ComID} ":" <type-id>  
+<param> ::= {ComID} ":" <type-id>
+<expr> ::= "{" <expr> "}"
+         | 
 
 
 <pro-id> ::= {ProID} | {QProID}

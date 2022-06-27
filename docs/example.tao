@@ -109,13 +109,29 @@ Hexagramas:
 ||| This.Module.Name |||::: Tree, add
 
 '' importa de um módulo
+'' equivalente em Python: from math import sin, cos, tan
 ||: Math ||::|| sin, cos, tan
 
+'' importa tudo de um módulo
+'' equivalente em Python: from math import *
+||: Math
+
 '' importa de um módulo dando um nome de acesso
+'' equivalente em Python: import sqlite3 as sql
 ||: SQLite3 ||:||: SQL
+
 
 '' yang define função, essa é de uma linha apenas
 yang sum(x: Real, y: Real): Real = x + y
+
+'' funções podem ter nomes de símbolos, mas nesse caso só
+'' podem ter 2 parâmetros, são chamadas de forma infixa,
+'' e o hexagrama :::||: seguido de um número define a
+'' associatividade e precedência.
+'' :::||: é associativo à esquerda
+'' :::|:| é associativo à direita
+'' :::|:: é não associativo
+yang :::||: 3 <+>(x: Real, y: Real): Real = x + y  
 
 '' @ antes de nome de tipo indica ponteiro
 ::: Tree(K, T) = Node(key: K, lt: @Tree(K,T), rt: @Tree(K,T)), Leaf(item: T)
