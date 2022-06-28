@@ -1,87 +1,88 @@
 /* Análise Léxica */
 
 %{
-#define SHOW(TOKEN)    printf("(%s)\n", TOKEN)
-#define SHOW_T(TOKEN)  printf("(%s, `%s`)\n", TOKEN, yytext)
-#define SHOW_I(TOKEN, V)  printf("(%s, %d)\n", TOKEN, V)
-#define SHOW_F(TOKEN, V)  printf("(%s, %lf)\n", TOKEN, V)
+#define SHOW(TOKEN)       printf("%d@(%s)\n", line, TOKEN)
+#define SHOW_T(TOKEN)     printf("%d@(%s, `%s`)\n", line, TOKEN, yytext)
+#define SHOW_I(TOKEN, V)  printf("%d@(%s, %d)\n", line, TOKEN, V)
+#define SHOW_F(TOKEN, V)  printf("%d@(%s, %lf)\n", line, TOKEN, V)
 
 int char_int_val(char c);
 int int_val(int base, int i0);
-double float_val();
+double real_val();
+int tri_hex_val();
+int line = 1;
 %}
+
 %option noyywrap
+%x COMMENT
+%x COMMENTS
 
 /* Definições regulares */
 
 ws            [ \n\t\r\v\f]
+ws_newline    [ \t\r\v\f]
 small         [a-z_]
 large         [A-Z]
 digit         [0-9]
-any_sym       {small}|{large}|{digit}|["' \t]
-any           {any_sym}|{symbol}
-symbol_cb     [!#$%&*+\./<=>?@^\|\-~]
-symbol_b      {symbol_cb}|:
-symbol_c      {symbol_cb}|\\
-symbol        {symbol_c}|:
-comment       \'\'+({any_sym}{any}*)?\n
-comments      \'\'\'([^\'''])*\'\'\'
-special       [\(\),;\[\]`\{\}]
-SymId         {any_sym}
-ComId         {small}({small}|{large}|{digit}|')*
-ProId         {large}({small}|{large}|{digit}|')*
-exponent      [eE][+-]?{decimal}
-float         ({decimal}\.{decimal}{exponent}?|{decimal}{exponent})
+hexit         [0-9A-Fa-f]
+symbol        [!#$%&*+\./<=>?@^\|\-~:]
+special       [\(\),\[\]\{\}]
+symid         {symbol}+
+comid         {small}({small}|{large}|{digit}|')*
+proid         {large}({small}|{large}|{digit}|')*
+qualify       ({proid}\.)+
 decimal       {digit}+
+exponent      [eE][+-]?{decimal}
+real          ({decimal}\.{decimal}{exponent}?|{decimal}{exponent})
 charesc       a|b|e|f|n|r|t|v|\\|\"|'
-cntrl         @|\[|\\|\]|ˆ|_
-ascii         \^{cntrl}|NUL|SOH|STX|ETX|EOT|ENQ|ACK|BEL|BS|HT|LF|VT|FF|CR|SO|SI|DLE|DC1|DC2|DC3|DC4|NAK|SYN|ETB|CAN|EM|SUB|ESC|FS|GS|RS|US|SP|DEL
-escape        \\({charesc}|{ascii}|{decimal})
+escape        \\({charesc}|x{hexit}{hexit})
 gap           \\{ws}+\\
-char          '({small}|{large}|{symbol_b}|{digit}|{special}|\"|" "|{escape})'
-string        \"({small}|{large}|{symbol_b}|{digit}|{special}|\'|" "|{escape}|{gap})*\"
+char          '([^'\\]|{escape})'
+string        \"([^"\\]|{escape}|{gap})*\"
+trigram       [\|:]{3,3}
+hexagram      [\|:]{6,6}
 
 
 
 %%
-({ws}|{comment}|{comments})+    {/* ignore */}
+\n                              {SHOW("Endl"); line++;}
+;                               {SHOW("Endl");}
+''                              {BEGIN(COMMENT);}
+<COMMENT>\n                     {BEGIN(INITIAL);line++;}
+<COMMENT>.                      {/* ignore */}
+'''+                            {BEGIN(COMMENTS);}
+<COMMENTS>\n                    {line++;}
+<COMMENTS>'''+                  {BEGIN(INITIAL);}
+<COMMENTS>.                     {/* ignore */}
+{ws_newline}+                   {/* ignore */}
 yin                             {SHOW("Yin");}
 yang                            {SHOW("Yang");}
 wuji                            {SHOW("Wuji");}
-\|\|\|                          {SHOW("SymExportModule");}
-\|\|\:                          {SHOW("SymImportModule");}
-\|\|\:\|\|                      {SHOW("SymFromImport");}
-\|\|\:\|\|\:                    {SHOW("SymImportAs");}
-\|\|\|\:\:\:                    {SHOW("SymExportMethods");}
-\|\:\|                          {SHOW("SymMatch");}
-\|\:\|\|\|\|                    {SHOW("SymMatchCase");}
-\|\:\|\:\|\:                    {SHOW("SymBlock");}
-\:\|\:                          {SHOW("SymIf");}
-\:\|\:\|\:\:                    {SHOW("SymThen");}
-\:\|\:\:\|\:                    {SHOW("SymElif");}
-\:\|\:\:\|\|                    {SHOW("SymElse");}
-\|\:\:                          {SHOW("SymFree");}
-\:\|\|                          {SHOW("SymLoop");}
-\:\:\|                          {SHOW("SymMemAlloc");}
-\:\:\:                          {SHOW("SymType");}
-\>                              {SHOW("SymGT");}
-\<                              {SHOW("SymLT");}
-\<\=                            {SHOW("SymLE");}
-\>\=                            {SHOW("SymGE");}
-\=                              {SHOW("SymEQ");}
-\!\=                            {SHOW("SymNE");}
+{trigram}                       {SHOW_I("Trig", tri_hex_val());}
+{hexagram}                      {SHOW_I("Hex", tri_hex_val());}
 @                               {SHOW("SymPointer");}
+:                               {SHOW("SymTypeTag");}
+=                               {SHOW("SymAssign");}
+\.                              {SHOW("SymAccess");}
 {special}                       {SHOW_T("Special");}
-{SymId}                         {SHOW_T("SymId");}
-{ComId}                         {SHOW_T("ComId");}
-{ProId}                         {SHOW_T("ProId");}
+{symid}                         {SHOW_T("SymId");}
+{comid}                         {SHOW_T("ComId");}
+{proid}                         {SHOW_T("ProId");}
+{qualify}{symid}                {SHOW_T("QSymId");}
+{qualify}{comid}                {SHOW_T("QComId");}
+{qualify}{proid}                {SHOW_T("QProId");}
+0[oO][0-7]+                     {SHOW_I("LiteralInt", int_val(8, 2));}
 {decimal}                       {SHOW_I("LiteralInt", int_val(10, 0));}
-{float}                         {SHOW_F("LiteralFloat", float_val());}
+0[xX]{hexit}+                   {SHOW_I("LiteralInt", int_val(16, 2));}
+{real}                          {SHOW_F("LiteralReal", real_val());}
 {char}                          {SHOW_T("LiteralChar");}
 {string}                        {SHOW_T("LiteralString");}
-
+.                               {printf("Lexical error @%d: `%s`\n", line, yytext);}
 
 %%
+
+/* Código auxiliar */
+
 int char_int_val(char c) {
   if ('0' <= c && c <= '9')
     return c - '0';
@@ -100,7 +101,7 @@ int int_val(int base, int i0) {
   return v;
 }
 
-double float_val() {
+double real_val() {
   double v = 0;
   int i = 0;
   for (; '0' <= yytext[i] && yytext[i] <= '9'; ++i)
@@ -131,7 +132,13 @@ double float_val() {
   return v;
 }
 
-/* Código auxiliar */
+int tri_hex_val() {
+  int val = 0;
+  for (int i = 0; yytext[i]; ++i)
+    val = (val << 1) + (yytext[i]=='|');
+  return val;
+}
+
 int main() {
   yylex();
   return 0;

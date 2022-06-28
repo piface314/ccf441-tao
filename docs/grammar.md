@@ -99,7 +99,8 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
 <step> ::= {Hex28} <block> | ""
 
 <free> ::= {Trig4} <addr>
-<malloc> ::= {Trig1} <type-id-no-param> <malloc-n>
+<malloc> ::= {Trig1} <type-id> <malloc-n>
+           | {Hex12} <type-id> <malloc-n>
 <malloc-n> ::= {Hex11} {IntLiteral} | ""
 
 <expr> ::= "{" <stmts> {Endl} <expr> "}" | <expr-addr>
@@ -132,8 +133,7 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
 <pro-id> ::= {ProID} | {QProID}
 <com-id> ::= {ComID} | {QComID}
 
-<type-id> ::= <type-id-no-param> <type-param-list>
-<type-id-no-param> ::= <pointers> {QProID}
+<type-id> ::= <pointers> {QProID} <type-param-list>
 <type-param-list> ::= "(" <type-params> ")" | ""
 <type-params> ::= <type-params> "," <type-id> | <type-id>
 <pointers> ::= <pointers> "@" | ""
