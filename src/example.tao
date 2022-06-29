@@ -182,16 +182,3 @@ wuji main() {
   
 }
 
-''' Precedência de operadores
-
-8 ** (pow)
-7 * / // & ^ % 
-6 + - |
-5 << >>
-4 == != < <= >= >
-3 &&
-2 ||
-1 (nenhum)
-0 @ $ - ~ (prefixos e unários) 
-
-``

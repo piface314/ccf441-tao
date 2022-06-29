@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="400mm"
+   height="210mm"
+   viewBox="0 0 400 210"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2 (1:1.2+202206011327+fc4e4096c5)"
+   sodipodi:docname="trigrams.svg"
+   inkscape:export-filename="trigrams.png"
+   inkscape:export-xdpi="187.5"
+   inkscape:export-ydpi="187.5"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showguides="false"
+     inkscape:zoom="0.5282758"
+     inkscape:cx="712.69591"
+     inkscape:cy="423.07446"
+     inkscape:window-width="1366"
+     inkscape:window-height="714"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <sodipodi:guide
+       position="200,140.09447"
+       orientation="-1,0"
+       id="guide5239"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="99.999998,232.66557"
+       orientation="-1,0"
+       id="guide5241"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="300,171.04354"
+       orientation="-1,0"
+       id="guide5243"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5"
+       markerHeight="3"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="none"
+       markerUnits="strokeWidth">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g2724"
+       transform="matrix(0.48922974,0,0,0.48922974,341.30171,77.905498)">
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect739"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="131.06151" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect1003"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="152.75735" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect1005"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="174.45319" />
+    </g>
+    <rect
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.664893;stroke-linecap:square"
+       id="rect1063"
+       width="60.826363"
+       height="10.449872"
+       x="270"
+       y="95.260208" />
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="289.00046"
+       y="120.37919"
+       id="text1067"><tspan
+         sodipodi:role="line"
+         id="tspan1065"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';stroke-width:0.264583"
+         x="289.00046"
+         y="120.37919">Yang</tspan></text>
+    <g
+       id="g1615"
+       transform="translate(206.37619,-22.534691)">
+      <path
+         id="path1455"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         d="M 89.366991,111.39938 A 18.679186,18.679186 0 0 0 108.04646,92.720419 18.679186,18.679186 0 0 0 89.366991,74.041458 a 9.3395967,9.3395967 0 0 0 -9.339487,9.33948 9.3395967,9.3395967 0 0 0 9.339487,9.339481 9.3395967,9.3395967 0 0 1 9.34,9.339481 9.3395967,9.3395967 0 0 1 -9.34,9.33948 z" />
+      <circle
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.11251;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         id="circle1611"
+         cx="89.367508"
+         cy="83.249969"
+         r="2.9465365" />
+    </g>
+    <g
+       id="g2732"
+       transform="matrix(0.48922974,0,0,0.48922974,291.27569,78.025078)">
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect2728"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="152.75735" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect2730"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="174.45319" />
+      <path
+         id="rect2347"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 28.722519,130.57266 v 13.86173 h 34.015108 v -13.86173 z m 46.672762,0 v 13.86173 h 34.015109 v -13.86173 z" />
+    </g>
+    <g
+       id="g2740"
+       transform="matrix(0.48922974,0,0,0.48922974,241.24966,77.905498)">
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect2734"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="131.06151" />
+      <path
+         id="rect2347-6"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 28.722519,152.75751 v 13.86173 h 34.015108 v -13.86173 z m 46.672767,0 v 13.86173 h 34.015104 v -13.86173 z" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect2738"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="174.45319" />
+    </g>
+    <g
+       id="g2748"
+       transform="matrix(0.48922974,0,0,0.48922974,107.42707,70.682191)">
+      <path
+         id="rect2347-7"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,145.82624 v 13.86173 h 34.01511 v -13.86173 z m 46.67277,0 v 13.86173 h 34.01511 v -13.86173 z" />
+      <path
+         id="rect2347-5"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,167.52192 v 13.86174 h 34.01511 v -13.86174 z m 46.67277,0 v 13.86174 h 34.01511 v -13.86174 z" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect2746"
+         width="80.687881"
+         height="13.86205"
+         x="200.00517"
+         y="189.21776" />
+    </g>
+    <g
+       id="g5013"
+       transform="matrix(0.48922974,0,0,-0.48922974,-42.650992,241.37741)">
+      <path
+         id="path5007"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,145.82624 v 13.86173 h 34.01511 v -13.86173 z m 46.67277,0 v 13.86173 h 34.01511 v -13.86173 z" />
+      <path
+         id="path5009"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,167.52192 v 13.86174 h 34.01511 v -13.86174 z m 46.67277,0 v 13.86174 h 34.01511 v -13.86174 z" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect5011"
+         width="80.687881"
+         height="13.86205"
+         x="200.00517"
+         y="189.21776" />
+    </g>
+    <g
+       id="g5021"
+       transform="matrix(0.48922974,0,0,-0.48922974,-92.677014,241.3774)">
+      <path
+         id="path5015"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,145.82624 v 13.86173 h 34.01511 v -13.86173 z m 46.67277,0 v 13.86173 h 34.01511 v -13.86173 z" />
+      <path
+         id="path5017"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,167.52192 v 13.86174 h 34.01511 v -13.86174 z m 46.67277,0 v 13.86174 h 34.01511 v -13.86174 z" />
+      <path
+         id="rect2347-3"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 200.00517,203.0798 v -13.86173 h 34.01511 v 13.86173 z m 46.67277,0 v -13.86173 h 34.01511 v 13.86173 z" />
+    </g>
+    <g
+       id="g5042"
+       transform="matrix(0.48922974,0,0,-0.48922974,7.3750322,241.37737)">
+      <path
+         id="path5036"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882365;stroke-linecap:square;stroke-dasharray:none"
+         d="m 200.00517,145.82624 v 13.86173 h 34.01511 v -13.86173 z m 46.67277,0 v 13.86173 h 34.01511 v -13.86173 z" />
+      <path
+         id="path5038"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882365;stroke-linecap:square;stroke-dasharray:none"
+         d="m 200.00517,189.21791 v 13.86174 h 34.01511 v -13.86174 z m 46.67277,0 v 13.86174 h 34.01511 v -13.86174 z" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882365;stroke-linecap:square;stroke-dasharray:none"
+         id="rect5040"
+         width="80.687881"
+         height="13.86205"
+         x="200.00517"
+         y="167.52191" />
+    </g>
+    <g
+       id="g5050"
+       transform="matrix(0.48922974,0,0,-0.48922974,141.19762,234.03452)">
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect5044"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="152.75735" />
+      <rect
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.881999;stroke-linecap:square"
+         id="rect5046"
+         width="80.687881"
+         height="13.86205"
+         x="28.722519"
+         y="174.45319" />
+      <path
+         id="path5048"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.882002;stroke-linecap:square"
+         d="m 28.722519,130.57266 v 13.86173 h 34.015108 v -13.86173 z m 46.672762,0 v 13.86173 h 34.015109 v -13.86173 z" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="25.260317"
+       y="182.96939"
+       id="text5134"><tspan
+         sodipodi:role="line"
+         id="tspan5132"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="25.260317"
+         y="182.96939">000</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="25.260317"
+         y="194.05991"
+         id="tspan5136">0</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="25.260317"
+         y="205.15044"
+         id="tspan5138">Terra</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="75.252754"
+       y="182.96939"
+       id="text5146"><tspan
+         sodipodi:role="line"
+         id="tspan5140"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="75.252754"
+         y="182.96939">001</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="75.252754"
+         y="194.05991"
+         id="tspan5142">1</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="75.252754"
+         y="205.15044"
+         id="tspan5144">Montanha</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="125.42863"
+       y="182.96939"
+       id="text5154"><tspan
+         sodipodi:role="line"
+         id="tspan5148"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="125.42863"
+         y="182.96939">010</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="125.42863"
+         y="194.05991"
+         id="tspan5150">2</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="125.42863"
+         y="205.15044"
+         id="tspan5152">Água</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="175.24536"
+       y="182.96939"
+       id="text5162"><tspan
+         sodipodi:role="line"
+         id="tspan5156"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="175.24536"
+         y="182.96939">011</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="175.24536"
+         y="194.05991"
+         id="tspan5158">3</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="175.24536"
+         y="205.15044"
+         id="tspan5160">Vento</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="225.18353"
+       y="182.96939"
+       id="text5170"><tspan
+         sodipodi:role="line"
+         id="tspan5164"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="225.18353"
+         y="182.96939">100</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="225.18353"
+         y="194.05991"
+         id="tspan5166">4</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="225.18353"
+         y="205.15044"
+         id="tspan5168">Trovão</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="274.81165"
+       y="182.96939"
+       id="text5178"><tspan
+         sodipodi:role="line"
+         id="tspan5172"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="274.81165"
+         y="182.96939">101</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="274.81165"
+         y="194.05991"
+         id="tspan5174">5</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="274.81165"
+         y="205.15044"
+         id="tspan5176">Fogo</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="324.83768"
+       y="182.96939"
+       id="text5186"><tspan
+         sodipodi:role="line"
+         id="tspan5180"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="324.83768"
+         y="182.96939">110</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="324.83768"
+         y="194.05991"
+         id="tspan5182">6</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="324.83768"
+         y="205.15044"
+         id="tspan5184">Lago</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="375.19183"
+       y="182.96939"
+       id="text5194"><tspan
+         sodipodi:role="line"
+         id="tspan5188"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="375.19183"
+         y="182.96939">111</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="375.19183"
+         y="194.05991"
+         id="tspan5190">7</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="375.19183"
+         y="205.15044"
+         id="tspan5192">Céu</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="93.256729"
+       y="120.37919"
+       id="text1061"><tspan
+         sodipodi:role="line"
+         id="tspan1059"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';stroke-width:0.264583"
+         x="93.256729"
+         y="120.37919">Yin</tspan></text>
+    <g
+       id="g1619"
+       transform="translate(15.716382,-22.53469)">
+      <path
+         id="path1171"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         d="m 89.367503,74.041456 a 18.679186,18.679186 0 0 0 -18.67948,18.678964 18.679186,18.679186 0 0 0 18.67948,18.67896 9.3395967,9.3395967 0 0 0 9.339481,-9.33948 9.3395967,9.3395967 0 0 0 -9.339481,-9.33948 9.3395967,9.3395967 0 0 1 -9.339999,-9.339482 9.3395967,9.3395967 0 0 1 9.339999,-9.339482 z" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.11251;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         id="path1605"
+         cx="89.367508"
+         cy="102.0599"
+         r="2.9465365" />
+    </g>
+    <path
+       id="path5048-5"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke-width:0.664911;stroke-linecap:square"
+       d="M 70,105.71008 V 95.260207 h 25.642795 v 10.449873 z m 35.18495,0 V 95.260207 h 25.64282 v 10.449873 z" />
+    <circle
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+       id="path5259"
+       cx="200"
+       cy="19.668358"
+       r="15.884498" />
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="189.69576"
+       y="48.832741"
+       id="text5263"><tspan
+         sodipodi:role="line"
+         id="tspan5261"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Futura Md BT';-inkscape-font-specification:'Futura Md BT';stroke-width:0.264583"
+         x="189.69576"
+         y="48.832741">Wuji</tspan></text>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="M 166.10498,34.792528 136.73655,51.748401"
+       id="path5319" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="m 229.42065,31.106452 29.36843,16.955873"
+       id="path6478" />
+    <g
+       id="g6496"
+       transform="translate(3.5185881,5.8208334)">
+      <path
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         d="m 186.76816,84.216011 19.42651,19.426509"
+         id="path6490" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1"
+         d="M 206.19467,84.216011 186.76816,103.64252"
+         id="path6492" />
+    </g>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="m 56.242075,109.29999 -29.36843,16.95587"
+       id="path6593" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-miterlimit:5;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="m 349.51236,109.29999 29.36843,16.95587"
+       id="path6599" />
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="189.34264"
+       y="63.897583"
+       id="text6706"><tspan
+         sodipodi:role="line"
+         id="tspan6704"
+         style="stroke-width:0.264583"
+         x="189.34264"
+         y="63.897583">無極</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="94.862953"
+       y="132.54958"
+       id="text388"><tspan
+         sodipodi:role="line"
+         id="tspan386"
+         style="stroke-width:0.264583"
+         x="94.862953"
+         y="132.54958">陰</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:0;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';stroke-width:0.264583"
+       x="294.90454"
+       y="132.54958"
+       id="text494"><tspan
+         sodipodi:role="line"
+         id="tspan492"
+         style="stroke-width:0.264583"
+         x="294.90454"
+         y="132.54958">陽</tspan></text>
+  </g>
+</svg>

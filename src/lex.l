@@ -28,8 +28,8 @@ hexit         [0-9A-Fa-f]
 symbol        [!#$%&*+\./<=>?@^\|\-~:]
 special       [\(\),\[\]\{\}]
 symid         {symbol}+
-comid         {small}({small}|{large}|{digit}|')*
-proid         {large}({small}|{large}|{digit}|')*
+comid         {small}({small}|{large}|{digit})*
+proid         {large}({small}|{large}|{digit})*
 qualify       ({proid}\.)+
 decimal       {digit}+
 exponent      [eE][+-]?{decimal}
@@ -50,7 +50,7 @@ hexagram      [\|:]{6,6}
 ''                              {BEGIN(COMMENT);}
 <COMMENT>\n                     {BEGIN(INITIAL);line++;}
 <COMMENT>.                      {/* ignore */}
-'''+                            {BEGIN(COMMENTS);}
+'''                             {BEGIN(COMMENTS);}
 <COMMENTS>\n                    {line++;}
 <COMMENTS>'''+                  {BEGIN(INITIAL);}
 <COMMENTS>.                     {/* ignore */}
@@ -71,13 +71,12 @@ wuji                            {SHOW("Wuji");}
 {qualify}{symid}                {SHOW_T("QSymId");}
 {qualify}{comid}                {SHOW_T("QComId");}
 {qualify}{proid}                {SHOW_T("QProId");}
-0[oO][0-7]+                     {SHOW_I("LiteralInt", int_val(8, 2));}
 {decimal}                       {SHOW_I("LiteralInt", int_val(10, 0));}
 0[xX]{hexit}+                   {SHOW_I("LiteralInt", int_val(16, 2));}
 {real}                          {SHOW_F("LiteralReal", real_val());}
 {char}                          {SHOW_T("LiteralChar");}
 {string}                        {SHOW_T("LiteralString");}
-.                               {printf("Lexical error @%d: `%s`\n", line, yytext);}
+.                               {printf("Lexical unbalance at line %d: unknown symbol `%s`\n", line, yytext);}
 
 %%
 
