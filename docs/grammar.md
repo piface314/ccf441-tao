@@ -51,6 +51,9 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
          | <while>
          | <repeat>
          | <free>
+         | <break>
+         | <continue>
+         | <return>
          | <expr>
          | ""
 
@@ -98,11 +101,15 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
 <com-id-list> ::= <com-ids> | ""
 <com-ids> ::= <com-ids> "," (ComID) | (ComID)
 
-<while> ::= (Trig3) <expr> <step> (Hex31) <expr>
-<repeat> ::= (Hex27) <expr> (Hex25) <expr> <step>
+<while> ::= (Trig3) <expr> <step> (Hex31) <block>
+<repeat> ::= (Hex27) <block> (Hex25) <expr> <step>
 <step> ::= (Hex28) <block> | ""
 
 <free> ::= (Trig4) <addr>
+
+<break> ::= (Hex30)
+<continue> ::= (Hex26)
+<return> ::= (Hex62) <expr>
 
 <expr> ::= "{" <stmts> (Endl) <expr> "}"
          | <if-expr>
