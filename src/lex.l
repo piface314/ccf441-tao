@@ -1,11 +1,14 @@
 /* Análise Léxica */
 
 %{
+#include "y.tab.h"
+
 #define SHOW(TOKEN)       printf("%d@(%s)\n", line, TOKEN)
 #define SHOW_T(TOKEN)     printf("%d@(%s, `%s`)\n", line, TOKEN, yytext)
 #define SHOW_I(TOKEN, V)  printf("%d@(%s, %d)\n", line, TOKEN, V)
 #define SHOW_F(TOKEN, V)  printf("%d@(%s, %lf)\n", line, TOKEN, V)
 
+void count_lines();
 int char_int_val(char c);
 int int_val(int base, int i0);
 double real_val();
@@ -13,7 +16,6 @@ int tri_hex_val();
 int line = 1;
 %}
 
-%option noyywrap
 %x COMMENT
 %x COMMENTS
 
@@ -42,45 +44,50 @@ string        \"([^"\\]|{escape}|{gap})*\"
 trigram       [\|:]{3,3}
 hexagram      [\|:]{6,6}
 
-
-
 %%
-\n                              {SHOW("Endl"); line++;}
-;                               {SHOW("Endl");}
-''                              {BEGIN(COMMENT);}
-<COMMENT>\n                     {BEGIN(INITIAL);line++;}
-<COMMENT>.                      {/* ignore */}
-'''                             {BEGIN(COMMENTS);}
-<COMMENTS>\n                    {line++;}
-<COMMENTS>'''+                  {BEGIN(INITIAL);}
-<COMMENTS>.                     {/* ignore */}
-{ws_newline}+                   {/* ignore */}
-yin                             {SHOW("Yin");}
-yang                            {SHOW("Yang");}
-wuji                            {SHOW("Wuji");}
-{trigram}                       {SHOW_I("Trig", tri_hex_val());}
-{hexagram}                      {SHOW_I("Hex", tri_hex_val());}
-@                               {SHOW("SymPointer");}
-:                               {SHOW("SymTypeTag");}
-=                               {SHOW("SymAssign");}
-\.                              {SHOW("SymAccess");}
-{special}                       {SHOW_T("Special");}
-{symid}                         {SHOW_T("SymId");}
-{comid}                         {SHOW_T("ComId");}
-{proid}                         {SHOW_T("ProId");}
-{qualify}{symid}                {SHOW_T("QSymId");}
-{qualify}{comid}                {SHOW_T("QComId");}
-{qualify}{proid}                {SHOW_T("QProId");}
-{decimal}                       {SHOW_I("LiteralInt", int_val(10, 0));}
-0[xX]{hexit}+                   {SHOW_I("LiteralInt", int_val(16, 2));}
-{real}                          {SHOW_F("LiteralReal", real_val());}
-{char}                          {SHOW_T("LiteralChar");}
-{string}                        {SHOW_T("LiteralString");}
-.                               {printf("Lexical unbalance at line %d: unknown symbol `%s`\n", line, yytext);}
+{ws_newline}            {/* ignore */}
+{ws}+                   {SHOW("Endl"); count_lines();}
+\\{ws}+                 {count_lines();}
+;                       {SHOW("Endl");}
+''                      {BEGIN(COMMENT);}
+<COMMENT>\n             {BEGIN(INITIAL);line++;}
+<COMMENT>.              {/* ignore */}
+'''                     {BEGIN(COMMENTS);}
+<COMMENTS>\n            {line++;}
+<COMMENTS>'''+          {BEGIN(INITIAL);}
+<COMMENTS>.             {/* ignore */}
+yin                     {SHOW("Yin");}
+yang                    {SHOW("Yang");}
+wuji                    {SHOW("Wuji");}
+{trigram}               {SHOW_I("Trig", tri_hex_val());}
+{hexagram}              {SHOW_I("Hex", tri_hex_val());}
+@                       {SHOW("SymPointer");}
+:                       {SHOW("SymTypeTag");}
+=                       {SHOW("SymAssign");}
+\.                      {SHOW("SymAccess");}
+{special}               {SHOW_T("Special");}
+{symid}                 {SHOW_T("SymId");}
+{comid}                 {SHOW_T("ComId");}
+{proid}                 {SHOW_T("ProId");}
+{qualify}{symid}        {SHOW_T("QSymId");}
+{qualify}{comid}        {SHOW_T("QComId");}
+{qualify}{proid}        {SHOW_T("QProId");}
+{decimal}               {SHOW_I("LiteralInt", int_val(10, 0));}
+0[xX]{hexit}+           {SHOW_I("LiteralInt", int_val(16, 2));}
+{real}                  {SHOW_F("LiteralReal", real_val());}
+{char}                  {SHOW_T("LiteralChar");}
+{string}                {SHOW_T("LiteralString");}
+.                       {printf("Lexical unbalance at line %d: unknown symbol `%s`\n", line, yytext);}
 
 %%
 
 /* Código auxiliar */
+
+void count_lines() {
+  for (int i=0; yytext[i]; ++i)
+    if (yytext[i] == '\n')
+      line++;
+}
 
 int char_int_val(char c) {
   if ('0' <= c && c <= '9')
@@ -138,7 +145,6 @@ int tri_hex_val() {
   return val;
 }
 
-int main() {
-  yylex();
-  return 0;
+int yywrap(void) {
+  return 1;
 }

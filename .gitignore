@@ -52,3 +52,6 @@ Mkfile.old
 dkms.conf
 
 *.yy.c
+y.tab.*
+*.zip
+bin/*
