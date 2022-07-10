@@ -1,27 +1,46 @@
 /* Análise Léxica */
 
 %{
-#include "y.tab.h"
+  #include "defs.h"
+  #include "y.tab.h"
+  #include <stdlib.h>
+  #include <string.h>
 
-#define SHOW(TOKEN)       printf("%d@(%s)\n", line, TOKEN)
-#define SHOW_T(TOKEN)     printf("%d@(%s, `%s`)\n", line, TOKEN, yytext)
-#define SHOW_I(TOKEN, V)  printf("%d@(%s, %d)\n", line, TOKEN, V)
-#define SHOW_F(TOKEN, V)  printf("%d@(%s, %lf)\n", line, TOKEN, V)
+  #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line; \
+    yylloc.first_column = yylloc.last_column; \
+    for (int i = 0; yytext[i]; i++) { \
+      if (yytext[i] == '\n') \
+        yylloc.last_line++, yylloc.last_column = 1; \
+      else \
+        yylloc.last_column++; \
+    }
 
-void count_lines();
-int char_int_val(char c);
-int int_val(int base, int i0);
-double real_val();
-int tri_hex_val();
-int line = 1;
+  #define STR_BUFFER_SIZE 0x1000 
+
+  int str_token(int tk);
+  int char_int_val(char c);
+  int int_val(int base, int i0);
+  double real_val();
+  char unescape(char c);
+  String string_val();
+  int tri_hex_val();
+  void lexerror(char *msg);
+  
+  char buffer[STR_BUFFER_SIZE];
+  char *s = NULL;
 %}
+
+%option yylineno
 
 %x COMMENT
 %x COMMENTS
+%x STRLIT
 
 /* Definições regulares */
 
 ws            [ \n\t\r\v\f]
+ws_space      [\n\t\r\v\f]
 ws_newline    [ \t\r\v\f]
 small         [a-z_]
 large         [A-Z]
@@ -32,61 +51,72 @@ special       [\(\),\[\]\{\}]
 symid         {symbol}+
 comid         {small}({small}|{large}|{digit})*
 proid         {large}({small}|{large}|{digit})*
-qualify       ({proid}\.)+
 decimal       {digit}+
 exponent      [eE][+-]?{decimal}
 real          ({decimal}\.{decimal}{exponent}?|{decimal}{exponent})
 charesc       a|b|e|f|n|r|t|v|\\|\"|'
-escape        \\({charesc}|x{hexit}{hexit})
 gap           \\{ws}+\\
-char          '([^'\\]|{escape})'
-string        \"([^"\\]|{escape}|{gap})*\"
 trigram       [\|:]{3,3}
 hexagram      [\|:]{6,6}
 
 %%
-{ws_newline}            {/* ignore */}
-{ws}+                   {SHOW("Endl"); count_lines();}
-\\{ws}+                 {count_lines();}
-;                       {SHOW("Endl");}
-''                      {BEGIN(COMMENT);}
-<COMMENT>\n             {BEGIN(INITIAL);line++;}
-<COMMENT>.              {/* ignore */}
-'''                     {BEGIN(COMMENTS);}
-<COMMENTS>\n            {line++;}
-<COMMENTS>'''+          {BEGIN(INITIAL);}
-<COMMENTS>.             {/* ignore */}
-yin                     {SHOW("Yin");}
-yang                    {SHOW("Yang");}
-wuji                    {SHOW("Wuji");}
-{trigram}               {SHOW_I("Trig", tri_hex_val());}
-{hexagram}              {SHOW_I("Hex", tri_hex_val());}
-@                       {SHOW("SymPointer");}
-:                       {SHOW("SymTypeTag");}
-=                       {SHOW("SymAssign");}
-\.                      {SHOW("SymAccess");}
-{special}               {SHOW_T("Special");}
-{symid}                 {SHOW_T("SymId");}
-{comid}                 {SHOW_T("ComId");}
-{proid}                 {SHOW_T("ProId");}
-{qualify}{symid}        {SHOW_T("QSymId");}
-{qualify}{comid}        {SHOW_T("QComId");}
-{qualify}{proid}        {SHOW_T("QProId");}
-{decimal}               {SHOW_I("LiteralInt", int_val(10, 0));}
-0[xX]{hexit}+           {SHOW_I("LiteralInt", int_val(16, 2));}
-{real}                  {SHOW_F("LiteralReal", real_val());}
-{char}                  {SHOW_T("LiteralChar");}
-{string}                {SHOW_T("LiteralString");}
-.                       {printf("Lexical unbalance at line %d: unknown symbol `%s`\n", line, yytext);}
-
+{ws_newline}+               {/* ignore */}
+{ws}+                       {return ENDL;}
+\\{ws}+                     {/* ignore */}
+;                           {return ENDL;}
+''                          {BEGIN(COMMENT);}
+<COMMENT>\n                 {BEGIN(INITIAL);}
+<COMMENT>.                  {/* ignore */}
+'''                         {BEGIN(COMMENTS);}
+<COMMENTS>'''+              {BEGIN(INITIAL);}
+<COMMENTS>\n                {/* ignore */}
+<COMMENTS>.                 {/* ignore */}
+wuji                        {return WUJI;}
+yin                         {return YIN;}
+yang                        {return YANG;}
+{trigram}                   {return TRIG0 + tri_hex_val();}
+{hexagram}                  {return HEX00 + tri_hex_val();}
+[@:=\.]                     {return *yytext;}
+{special}                   {return *yytext;}
+\*\*                        {return str_token(SYM_ID_R8);}
+[*/&^]                      {return str_token(SYM_ID_L7);}
+[+\-\|]                     {return str_token(SYM_ID_L6);}
+(\<\<|\>\>)                 {return str_token(SYM_ID_L5);}
+\<\>                        {lexerror("%d:%d: %s: operator `<>` not allowed.\n");}
+\<\<{symbol}+               {return str_token(SYM_ID_L1);}
+{symbol}+\>\>               {return str_token(SYM_ID_R1);}
+\<{symbol}+                 {return str_token(SYM_ID_L5);}
+{symbol}+\>                 {return str_token(SYM_ID_R5);}
+(==|!=|\<|\<=|\>=|\>)       {return str_token(SYM_ID_N4);}
+&&                          {return str_token(SYM_ID_L3);}
+\|\|                        {return str_token(SYM_ID_L2);}
+{symid}                     {return str_token(SYM_ID_N1);}
+{comid}                     {return str_token(COM_ID);}
+{proid}                     {return str_token(PRO_ID);}
+{decimal}                   {yylval.int_val = int_val(10, 0); return INTEGER;}
+0[xX]{hexit}+               {yylval.int_val = int_val(16, 2); return INTEGER;}
+{real}                      {yylval.real_val = real_val(); return REAL;}
+'\\{charesc}'               {yylval.char_val = unescape(yytext[2]); return CHAR;}
+'\\x{hexit}{hexit}'         {yylval.char_val = (char)((char_int_val(yytext[3]) << 4) + char_int_val(yytext[4])); return CHAR;}
+'{ws_space}'                {lexerror("invalid char literal");}
+'[^']'                      {yylval.char_val = yytext[1]; return CHAR;}
+\"                          {BEGIN(STRLIT); s = buffer;}
+<STRLIT>\"                  {BEGIN(INITIAL); *s = 0; yylval.string_val = string_val(); return STRING;}
+<STRLIT>\\{charesc}         {*s++ = unescape(yytext[1]);}
+<STRLIT>\\x{hexit}{hexit}   {*s++ = (char)((char_int_val(yytext[2]) << 4) + char_int_val(yytext[3]));}
+<STRLIT>{gap}               {/* ignore */}
+<STRLIT>{ws_space}          {lexerror("invalid string literal");}
+<STRLIT>.                   {*s++ = *yytext;}
+<STRLIT><<EOF>>             {lexerror("invalid string literal");}
+.                           {lexerror("unknown symbol");}
 %%
 
 /* Código auxiliar */
 
-void count_lines() {
-  for (int i=0; yytext[i]; ++i)
-    if (yytext[i] == '\n')
-      line++;
+int str_token(int tk) {
+  yylval.string_val.s = strdup(yytext);
+  yylval.string_val.n = yyleng;
+  return tk;
 }
 
 int char_int_val(char c) {
@@ -138,11 +168,43 @@ double real_val() {
   return v;
 }
 
+char unescape(char c) {
+  switch (c) {
+    case 'a': return '\a';
+    case 'b': return '\b';
+    case 'e': return '\e';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case 'v': return '\v';
+    case '\\': return '\\';
+    case '"': return '"';
+    case '\'': return '\'';
+    default: return -1;
+  }
+}
+
+String string_val() {
+  String str = {
+    .s = strdup(buffer),
+    .n = (size_t)(s - buffer)
+  };
+  return str;
+}
+
 int tri_hex_val() {
   int val = 0;
   for (int i = 0; yytext[i]; ++i)
     val = (val << 1) + (yytext[i]=='|');
   return val;
+}
+
+void lexerror(char *msg) {
+  int line = yylloc.first_line;
+  int col = yylloc.first_column;
+  fprintf(stderr, "%d:%d: lexical unbalance: %s\n", line, col, msg);
+  exit(1);
 }
 
 int yywrap(void) {

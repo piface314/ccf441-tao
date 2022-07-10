@@ -2,34 +2,53 @@
 
 Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form), pra padronizar a notação.
 
+## Operadores
+
+Os operadores contendo `?` indicam que podem ser definidos pelo usuário.
+
+| Precedência | Operadores        | Associatividade | Nome do Token |
+|:------------|:------------------|:----------------|:--------------|
+| 8           | `**`              | Direita         | `SYM_ID_R8`   |
+| 7           | `* / & ^`         | Esquerda        | `SYM_ID_L7`   |
+| 6           | `+ - \|`          | Esquerda        | `SYM_ID_L6`   |
+| 5           | `<< >>`           | Esquerda        | `SYM_ID_L5`   |
+| 5           | `<?`              | Esquerda        | `SYM_ID_L5`   |
+| 5           | `?>`              | Direita         | `SYM_ID_R5`   |
+| 4           | `== != < <= >= >` | Não associativo | `SYM_ID_N4`   |
+| 3           | `&&`              | Esquerda        | `SYM_ID_L3`   |
+| 2           | `\|\|`            | Esquerda        | `SYM_ID_L2`   |
+| 1           | `<<?`             | Esquerda        | `SYM_ID_L1`   |
+| 1           | `?>>`             | Direita         | `SYM_ID_R1`   |
+| 1           | `?`               | Não associativo | `SYM_ID_N1`   |
+
 
 ## Legenda
 ```
 <variavel-da-gramatica>
-(NomeDeToken)
+NOME_DE_TOKEN
 "literal"
 
 "" : palavra vazia
-(ComID): identificador comum (começa com minúscula) `index`, `x`, `main`
-(ProID): identificador próprio (começa com maiúscula) `Tree`, `Node`, `List`
-(SymID): identificador de símbolo `+`, `-`, `*`, `/`
-(QComID): identificador comum qualificado `Tree.add`, `List.remove`
-(QProID): identificador próprio qualificado `Set.Empty`, `Model.Base.SQL`
-(QSymID): identificador de símbolo qualificado `Tree.+>`, `List.<<`
-(TrigX): trigrama de número X `Trig6 = ||:` `Trig5 = |:|` `Trig0 = :::`
-(HexXX): hexagrama de número XX `Hex00 = ::::::` `Hex42 = |:|:|:`
-(Endl): Fim de linha (pode ser \n ou ;)
+COM_ID: identificador comum (começa com minúscula) `index`, `x`, `main`
+PRO_ID: identificador próprio (começa com maiúscula) `Tree`, `Node`, `List`
+SYM_ID: identificador de símbolo `+`, `-`, `*`, `/`
+QCOM_ID: identificador comum qualificado `Tree.add`, `List.remove`
+QPRO_ID: identificador próprio qualificado `Set.Empty`, `Model.Base.SQL`
+QSYM_ID: identificador de símbolo qualificado `Tree.+>`, `List.<<`
+TRIGX: trigrama de número X `Trig6 = ||:` `Trig5 = |:|` `Trig0 = :::`
+HEXXX: hexagrama de número XX `Hex00 = ::::::` `Hex42 = |:|:|:`
+ENDL: Fim de linha (pode ser \n ou ;)
 ```
 
 ## Definição
 ```
 <program> ::= <module-decl> <top-stmts>
 
-<module-decl> ::= (Trig7) <pro-id> (Hex56) <exports> (Endl) | ""
-<exports> ::= <export> "," <export-id> | <export-id>
-<export-id> ::= (ComID) | (ProID) | (SymID)
+<module-decl> ::= TRIG7 <pro-id> HEX56 <exports> ENDL | ""
+<exports> ::= <exports> "," <export-id> | <export-id>
+<export-id> ::= COM_ID | PRO_ID | SYM_ID
 
-<top-stmts> ::= <top-stmts> (Endl) <top-stmt> | <top-stmt>
+<top-stmts> ::= <top-stmts> ENDL <top-stmt> | <top-stmt>
 <top-stmt> ::= <import>
              | <callable-def>
              | <def-type-params> <callable-def>
@@ -38,7 +57,7 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
              | <type-alias>
              | ""
 
-<stmts> ::= <stmts> (Endl) <stmt> | <stmt>
+<stmts> ::= <stmts> ENDL <stmt> | <stmt>
 <stmt> ::= <import>
          | <callable-def>
          | <def-type-params> <callable-def>
@@ -57,71 +76,69 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
          | <expr>
          | ""
 
-<import> ::= (Trig6) <pro-id>
-           | (Trig6) <pro-id> (Hex51) <export-list>
-           | (Trig6) <pro-id> (Hex54) (ProID) 
+<import> ::= TRIG6 <pro-id>
+           | TRIG6 <pro-id> HEX51 <exports>
+           | TRIG6 <pro-id> HEX54 PRO_ID 
 
-<def-type-params> ::= (Hex03) <type-params>
+<def-type-params> ::= HEX03 <type-params>
 <callable-def> ::= <func-def> | <op-def> | <proc-def>
 
-<var-def> ::= "yin" (ComID) ":" <type-id>
-            | "yin" (ComID) ":" <type-id> "=" <expr>
+<var-def> ::= "yin" COM_ID ":" <type-id>
+            | "yin" COM_ID ":" <type-id> "=" <expr>
 
-<func-def> ::= "yang" (ComID) "(" <param-list> ")" ":" <type-id> "=" <expr>  
+<func-def> ::= "yang" COM_ID "(" <param-list> ")" ":" <type-id> "=" <expr>  
 
-<op-def> ::= "yang" <op-assoc> <op-prec> (SymID) "(" <param> "," <param> ")" ":" <type-id> "=" <expr>
-<op-assoc> ::= (Hex04) | (Hex05) | (Hex06)
-<op-prec> ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
+<op-def> ::= "yang" <sym-id-> "(" <param> "," <param> ")" ":" <type-id> "=" <expr>
 
-<proc-def> ::= "wuji" (ComID) "(" <param-list> ")" <block>
+<proc-def> ::= "wuji" COM_ID "(" <param-list> ")" <block>
 
-<type-def> ::= (Trig0) (ProID) <type-param-list> "=" <constructors>
+<type-def> ::= TRIG0 PRO_ID <type-param-list> "=" <constructors>
 <constructors> ::= <constructors> "," <constructor> | <constructor>
-<constructor> ::= (ProID) "(" <param-list> ")"
+<constructor> ::= PRO_ID "(" <param-list> ")" | PRO_ID;
 
-<type-alias> ::= (Hex00) (ProID) <type-param-list> "=" <type-id>
+<type-alias> ::= HEX00 PRO_ID <type-param-list> "=" <type-id>
 
 <param-list> ::= <params> | ""
 <params> ::= <params> "," <param> | <param>
-<param> ::= (ComID) ":" <type-id>
+<param> ::= COM_ID ":" <type-id>
 
 
-<if-expr> ::= (Trig2) <expr> (Hex20) <expr> <elif> <else>
-<if-stmt> ::= (Trig2) <expr> (Hex20) <expr> <elif> <else-stmt>
-<else-stmt> ::= <else> | ""
-<else> ::= (Hex19) <expr>
-<elif> ::= <elif> (Hex18) <expr> (Hex20) <expr> | ""
+<if> ::= TRIG2 <expr> HEX20 <stmt> <elif> <else>
+<elif> ::= <elif> HEX18 <expr> HEX20 <expr> | ""
+<else> ::= HEX19 <expr> | ""
 
-<match> ::= (Trig5) <expr> <cases> <default>
+<match> ::= TRIG5 <expr> <cases> <default>
 <cases> ::= <cases> <case> | <case>
-<case> ::= (Hex47) <case-cond> (Hex42) <expr>
-<default> ::= (Hex44) <expr> | ""
+<case> ::= HEX47 <case-cond> HEX42 <expr>
+<default> ::= HEX44 <expr> | ""
 <case-cond> ::= <literal> | <decons> 
 <decons> ::= <pro-id> "(" <com-id-list> ")"
 <com-id-list> ::= <com-ids> | ""
-<com-ids> ::= <com-ids> "," (ComID) | (ComID)
+<com-ids> ::= <com-ids> "," COM_ID | COM_ID
 
-<while> ::= (Trig3) <expr> <step> (Hex31) <block>
-<repeat> ::= (Hex27) <block> (Hex25) <expr> <step>
-<step> ::= (Hex28) <block> | ""
+<while> ::= TRIG3 <expr> <step> HEX31 <block>
+<repeat> ::= HEX27 <block> HEX25 <expr> <step>
+<step> ::= HEX28 <block> | ""
 
-<free> ::= (Trig4) <addr>
+<free> ::= TRIG4 <addr>
 
-<break> ::= (Hex30)
-<continue> ::= (Hex26)
-<return> ::= (Hex62) <expr>
+<break> ::= HEX30
+<continue> ::= HEX26
+<return> ::= HEX62 <expr>
 
-<expr> ::= "{" <stmts> (Endl) <expr> "}"
-         | <if-expr>
+<expr> ::= "{" <stmts> ENDL <expr> "}"
+         | <if>
          | <match>
          | <assign>
          | <expr-addr>
 <expr-addr> ::= <expr-addr> "[" <expr> "]"
-              | <expr-addr> "." (ComID)
+              | <expr-addr> "." COM_ID
               | <expr-unary>
 <expr-unary> ::= <unary-ops> <expr-1> | <expr-1>
 <unary-ops> ::= <unary-ops> <unary-op>
 <unary-op> ::= "@" | "$" | "~" | "!" | "-"
+
+<expr> ::= <expr> SYM_ID_L5 <expr>
 <expr-N> ::= <expr-l-N> | <expr-r-N> | <expr-n-N> | <expr-N+1>
 <expr-n-N> ::= <expr-N+1> (SymIDnN) <expr-N+1>
 <expr-l-N> ::= <expr-l-N> (SymIDlN) <expr-N+1>
@@ -135,15 +152,15 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
            
 <assign> ::= <addr> "=" <expr>
 <addr> ::= <addr> "[" <expr> "]"
-         | <addr> "." (ComID)
+         | <addr> "." COM_ID
          | <addr-0>
 <addr-0> ::= <pointers> <addr-1>
 <addr-1> ::= <com-id> | "(" <addr> ")"
 
 <malloc> ::= <malloc-type> <type-id> <malloc-n>
            | <malloc-type> <expr> <malloc-n>
-<malloc-type> ::= (Trig1) | (Hex12)
-<malloc-n> ::= (Hex11) (LiteralInt) | ""
+<malloc-type> ::= TRIG1 | HEX12
+<malloc-n> ::= HEX11 (LiteralInt) | ""
 
 <build> ::= <pro-id> | <pro-id> "(" <exprs> ")"
 <call> ::= <com-id> "(" <expr-list> ")"
@@ -152,14 +169,20 @@ Podemos definir a gramática usando [BNF](https://en.wikipedia.org/wiki/Backus%E
 
 <block> ::= "{" <stmts> "}" | <stmt>
 
-<pro-id> ::= (ProID) | (QProID)
-<com-id> ::= (ComID) | (QComID)
+<scope> ::= <scope> PRO_ID "." | ""
+<pro-id> ::= <scope> PRO_ID
+<com-id> ::= <scope> COM_ID
+
+<sym-id> ::= <scope> <sym-id->
+<sym-id-> ::= SYM_ID_R8 | SYM_ID_L7 | SYM_ID_L6 | SYM_ID_L5
+    | SYM_ID_R5 | SYM_ID_N4 | SYM_ID_L3 | SYM_ID_L2
+    | SYM_ID_L1 | SYM_ID_R1 | SYM_ID_N1
 
 <type-id> ::= <pointers> <pro-id> <type-param-list>
-            | <pointers> (Hex57) <type-param-list> (Hex57) <type-id>
-            | <pointers> (Hex57) <type-param-list>
+            | <pointers> HEX57 <type-param-list> HEX57 <type-id>
+            | <pointers> HEX57 <type-param-list>
 <type-param-list> ::= "(" <type-params> ")" | ""
 <type-params> ::= <type-params> "," <type-id> | <type-id>
 <pointers> ::= <pointers> "@" | ""
-<literal> ::= (LiteralChar) | (LiteralString) | (LiteralInt) | (LiteralReal)
+<literal> ::= CHAR | STRING | INTEGER | REAL
 ```

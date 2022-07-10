@@ -1,0 +1,23 @@
+||| Module |||::: x231, Tree
+
+||: Math
+||: Math ||:||: M
+||: Math ||::|| sin, cos, tan
+
+yin x: Int = 5
+
+
+yang +>(x: Real, y: Real): Real = '\n'
+
+'''
+
+yin x: [3][2]Int = [[0, 1], [0, 1], [0, 1]]
+
+
+
+ @Int
+ @x
+
+  Int
+@@x
+'''

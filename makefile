@@ -10,13 +10,13 @@ all: bin/$(TARGET)
 bin/$(TARGET): $(OBJS)
 	gcc -o bin/$(TARGET) $(OBJS) $(LDFLAGS)
 
-obj/%.o: src/%.c src/%.h
+obj/%.o: src/%.c src/%.h src/defs.h
 	gcc -c $(CCFLAGS) src/$*.c -o obj/$*.o
 
-obj/%.yy.o: src/%.yy.c
+obj/%.yy.o: src/%.yy.c src/defs.h
 	gcc -c $(CCFLAGS) src/$*.yy.c -o obj/$*.yy.o
 
-obj/%.tab.o: src/%.tab.c src/%.tab.h
+obj/%.tab.o: src/%.tab.c src/%.tab.h src/defs.h
 	gcc -c $(CCFLAGS) src/$*.tab.c -o obj/$*.tab.o
 
 src/y.tab.h: src/parse.y
@@ -25,5 +25,8 @@ src/y.tab.h: src/parse.y
 src/y.tab.c: src/parse.y
 	yacc src/parse.y --defines=src/y.tab.h -o src/y.tab.c
 
-src/lex.yy.c: src/lex.l src/y.tab.h
-	flex -o src/lex.yy.c src/lex.l
+src/%.yy.c: src/%.l src/y.tab.h
+	flex -o src/$*.yy.c src/$*.l
+
+clean:
+	rm obj/* bin/* src/y.tab.* src/*.yy.c
