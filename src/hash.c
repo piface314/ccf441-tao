@@ -84,23 +84,25 @@ void Hash_show(HashTable *table) {
     printf("=========\n");
 }
 
-// typedef struct {
-//     char name[KEYMAX];
-// } Person;
+size_t Hash_size(HashTable *table) {
+    size_t n = 0;
+    for (size_t i = 0; i < table->size; ++i) {
+        HashKey key = table->key(Hash_at(i, table));
+        if (key[0])
+            n++;
+    }
+    return n;
+}
 
-// HashKey person_key(HashEntry entry) {
-//     return ((Person *)entry)->name;
-// }
-
-// int main(int argc, char const *argv[]) {
-//     HashTable *table = Hash_new(sizeof(Person), person_key, 3);
-//     for (int i = 1; i < argc; ++i) {
-//         Person entry;
-//         strcpy(entry.name, argv[i]);
-//         table = Hash_add(&entry, table);
-//         Hash_show(table);
-//     }
-//     Person *p = Hash_get("regina", table);
-//     printf("%s\n", p == NULL ? "N/A" : p->name);
-//     return 0;
-// }
+void **Hash_entries(HashTable *table) {
+    size_t j = 0;
+    void **entries = malloc(sizeof(void *) * table->size);
+    for (size_t i = 0; i < table->size; ++i) {
+        void *entry = Hash_at(i, table);
+        HashKey key = table->key(entry);
+        if (key[0])
+            entries[j++] = entry;
+    }
+    entries[j] = NULL;
+    return entries;
+}

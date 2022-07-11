@@ -9,15 +9,18 @@
   #define YY_USER_ACTION \
     yylloc.first_line = yylloc.last_line; \
     yylloc.first_column = yylloc.last_column; \
+    if (!started) started = 1, printf("%3d: ", yylloc.last_line); \
     for (int i = 0; yytext[i]; i++) { \
+      putchar(yytext[i]); \
       if (yytext[i] == '\n') \
-        yylloc.last_line++, yylloc.last_column = 1; \
+        yylloc.last_line++, yylloc.last_column = 1, printf("%3d: ", yylloc.last_line); \
       else \
         yylloc.last_column++; \
     }
 
   #define STR_BUFFER_SIZE 0x1000 
 
+  int started = 0;
   int str_token(int tk);
   int char_int_val(char c);
   int int_val(int base, int i0);

@@ -2,14 +2,17 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "defs.h"
+    #include "symtable.h"
     #include "y.tab.h"
     void yyerror(const char *fmt);
     void yyerror_(const char *msg, YYLTYPE loc);
     int yylex();
+
+    SymbolTable *root;
 %}
-%locations
 
 /* Definições */
+%locations
 
 %union {
     int int_val;
@@ -107,14 +110,14 @@ stmt:
     ; */
 
 import:
-    TRIG6 pro_id {printf("import %s\n", $2.s);}
-    | TRIG6 pro_id HEX51 exports {printf("import %s\n", $2.s);}
-    | TRIG6 pro_id HEX54 PRO_ID {printf("import %s as %s\n", $2.s, $4.s);}
+    TRIG6 pro_id
+    | TRIG6 pro_id HEX51 exports
+    | TRIG6 pro_id HEX54 PRO_ID
     ;
 
 var_def:
-    YIN COM_ID ':' type_id {printf("yin %s\n", $2.s);}
-    | YIN COM_ID ':' type_id '=' expr {printf("yin %s with expr\n", $2.s);}
+    YIN COM_ID ':' type_id
+    | YIN COM_ID ':' type_id '=' expr
     ;
 
 def_type_params: HEX03 type_params;
@@ -187,8 +190,16 @@ void yyerror_(const char *msg, YYLTYPE loc) {
     exit(1);
 }
 
+void init_symbol_table() {
+    
+}
+
 int main() {
+    root = SymTable_new(NULL);
+    init_symbol_table();
     yyparse();
+    printf("\n\nTabela de Símbolos:\n");
+    SymTable_show(root);
     return 0;
 }
 

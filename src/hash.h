@@ -27,5 +27,7 @@ size_t Hash_h2(HashKey key, HashTable *table);
 HashTable *Hash_add(HashEntry entry, HashTable *table);
 HashEntry Hash_get(HashKey key, HashTable *table);
 void Hash_show(HashTable *table);
+size_t Hash_size(HashTable *table);
+void **Hash_entries(HashTable *table);
 
 #endif
