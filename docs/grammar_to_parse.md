@@ -88,12 +88,12 @@
          | <match>
          | <assign>
          | <expr-addr> ```
-- [ ] ``` <expr-addr> ::= <expr-addr> "[" <expr> "]" ```
+- [x] ``` <expr-addr> ::= <expr-addr> "[" <expr> "]" ```
               | <expr-addr> "." COM_ID ```
               | <expr-unary> ```
-- [ ] ``` <expr-unary> ::= <unary-ops> <expr-1> | <expr-1> ```
-- [ ] ``` <unary-ops> ::= <unary-ops> <unary-op> ```
-- [ ] ``` <unary-op> ::= "@" | "$" | "~" | "!" | "-" ```
+- [x] ``` <expr-unary> ::= <unary-ops> <expr-1> | <expr-1> ```
+- [x] ``` <unary-ops> ::= <unary-ops> <unary-op> ```
+- [x] ``` <unary-op> ::= "@" | "$" | "~" | "!" | "-" ```
 
 - [ ] ``` <expr> ::= <expr> SYM_ID_L5 <expr> ```
 - [x] ``` <expr-9> ::= <literal>
