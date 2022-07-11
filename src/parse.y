@@ -42,6 +42,18 @@
 %token <string_val> SYM_ID_N4 SYM_ID_L3 SYM_ID_L2
 %token <string_val> SYM_ID_L1 SYM_ID_R1 SYM_ID_N1
 
+%nonassoc SYM_ID_N1
+%right SYM_ID_R1
+%left SYM_ID_L1
+%left SYM_ID_L2
+%left SYM_ID_L3
+%nonassoc SYM_ID_N4
+%right SYM_ID_R5
+%left  SYM_ID_L5
+%left  SYM_ID_L6
+%left  SYM_ID_L7
+%right SYM_ID_R8
+
 %type <string_val> pro_id
 
 %%
@@ -141,8 +153,28 @@ param: COM_ID ':' type_id;
 
 type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
-
 expr: literal | com_id;
+
+expr_addr: expr_addr '[' expr ']'
+        | expr_addr '.' COM_ID
+        | expr_unary;
+
+expr_unary: unary_ops expr_1 | expr_1
+unary_ops: unary_ops unary_op;
+unary_op: '@' | '$' | '~' | '!' | '-';
+
+expr_1: expr_1 SYM_ID_L1 expr_1 
+    | expr_1 SYM_ID_N1 expr_1 
+    | expr_1 SYM_ID_R1 expr_1
+    | expr_1 SYM_ID_L2 expr_1
+    | expr_1 SYM_ID_L3 expr_1
+    | expr_1 SYM_ID_N4 expr_1
+    | expr_1 SYM_ID_R5 expr_1
+    | expr_1 SYM_ID_L5 expr_1
+    | expr_1 SYM_ID_L6 expr_1
+    | expr_1 SYM_ID_L7 expr_1
+    | expr_1 SYM_ID_R8 expr_1
+    ;
 
 
 expr_9: literal

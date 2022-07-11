@@ -139,10 +139,18 @@ ENDL: Fim de linha (pode ser \n ou ;)
 <unary-op> ::= "@" | "$" | "~" | "!" | "-"
 
 <expr> ::= <expr> SYM_ID_L5 <expr>
-<expr-N> ::= <expr-l-N> | <expr-r-N> | <expr-n-N> | <expr-N+1>
-<expr-n-N> ::= <expr-N+1> (SymIDnN) <expr-N+1>
-<expr-l-N> ::= <expr-l-N> (SymIDlN) <expr-N+1>
-<expr-r-N> ::= <expr-N+1> (SymIDrN) <expr-r-N>
+<expr_1>: <expr_1> SYM_ID_L1 <expr_1> 
+    | <expr_1> SYM_ID_N1 <expr_1> 
+    | <expr_1> SYM_ID_R1 <expr_1>
+    | <expr_1> SYM_ID_L2 <expr_1>
+    | <expr_1> SYM_ID_L3 <expr_1>
+    | <expr_1> SYM_ID_N4 <expr_1>
+    | <expr_1> SYM_ID_R5 <expr_1>
+    | <expr_1> SYM_ID_L5 <expr_1>
+    | <expr_1> SYM_ID_L6 <expr_1>
+    | <expr_1> SYM_ID_L7 <expr_1>
+    | <expr_1> SYM_ID_R8 <expr_1>
+    
 <expr-9> ::= <literal>
            | <com-id>
            | <malloc>  

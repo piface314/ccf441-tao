@@ -96,10 +96,6 @@
 - [ ] ``` <unary-op> ::= "@" | "$" | "~" | "!" | "-" ```
 
 - [ ] ``` <expr> ::= <expr> SYM_ID_L5 <expr> ```
-- [ ] ``` <expr-N> ::= <expr-l-N> | <expr-r-N> | <expr-n-N> | <expr-N+1> ```
-- [ ] ``` <expr-n-N> ::= <expr-N+1> (SymIDnN) <expr-N+1> ```
-- [ ] ``` <expr-l-N> ::= <expr-l-N> (SymIDlN) <expr-N+1> ```
-- [ ] ``` <expr-r-N> ::= <expr-N+1> (SymIDrN) <expr-r-N> ```
 - [x] ``` <expr-9> ::= <literal>
            | <com-id>
            | <malloc>  
