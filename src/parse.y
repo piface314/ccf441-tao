@@ -144,6 +144,43 @@ type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
 expr: literal | com_id;
 
+
+expr_9: literal
+    | com_id
+    | malloc
+    | build
+    | call
+    | '(' expr ')'
+    ;
+
+assign: addr '=' expr;
+
+addr: addr '[' expr ']'
+    | addr '.' COM_ID
+    | addr_0
+    ;
+
+addr_0: ptrs addr_1;
+addr_1: com_id
+    | '(' addr ')'
+    ;
+
+malloc: malloc_type type_id malloc_n
+    | malloc_type expr malloc_n
+    ;
+
+malloc_type: TRIG1 | HEX12;
+malloc_n: HEX11 INTEGER
+    |
+    ;
+
+build: pro_id | pro_id '(' exprs ')';
+call: com_id '(' expr_list ')';
+expr_list: exprs 
+    |
+    ;
+exprs: exprs ',' expr;
+
 scope: scope PRO_ID '.' | ;
 pro_id: scope PRO_ID {$$ = $2;};
 com_id: scope COM_ID;
@@ -167,7 +204,7 @@ type_ptr:
     |
     ;
 
-/* ptrs: ptrs '@' | ; */
+ptrs: ptrs '@' | ;
 
 literal:
     INTEGER
