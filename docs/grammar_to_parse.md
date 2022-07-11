@@ -101,24 +101,24 @@
 - [ ] <expr-n-N> ::= <expr-N+1> (SymIDnN) <expr-N+1>
 - [ ] <expr-l-N> ::= <expr-l-N> (SymIDlN) <expr-N+1>
 - [ ] <expr-r-N> ::= <expr-N+1> (SymIDrN) <expr-r-N>
-- [ ] <expr-9> ::= <literal>
+- [x] <expr-9> ::= <literal>
            | <com-id>
            | <malloc>  
            | <build>
            | <call>
            | "(" <expr> ")"
            
-- [ ] <assign> ::= <addr> "=" <expr>
-- [ ] <addr> ::= <addr> "[" <expr> "]"
+- [x] <assign> ::= <addr> "=" <expr>
+- [x] <addr> ::= <addr> "[" <expr> "]"
          | <addr> "." COM_ID
          | <addr-0>
-- [ ] <addr-0> ::= <pointers> <addr-1>
-- [ ] <addr-1> ::= <com-id> | "(" <addr> ")"
+- [x] <addr-0> ::= <pointers> <addr-1>
+- [x] <addr-1> ::= <com-id> | "(" <addr> ")"
 
-- [ ] <malloc> ::= <malloc-type> <type-id> <malloc-n>
+- [x] <malloc> ::= <malloc-type> <type-id> <malloc-n>
            | <malloc-type> <expr> <malloc-n>
-- [ ] <malloc-type> ::= TRIG1 | HEX12
-- [ ] <malloc-n> ::= HEX11 (LiteralInt) | ""
+- [x] <malloc-type> ::= TRIG1 | HEX12
+- [x] <malloc-n> ::= HEX11 (LiteralInt) | ""
 
 - [x] <build> ::= <pro-id> | <pro-id> "(" <exprs> ")"
 - [x] <call> ::= <com-id> "(" <expr-list> ")"
