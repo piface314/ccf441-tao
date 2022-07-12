@@ -68,19 +68,19 @@
 - [ ] ``` <cases> ::= <cases> <case> | <case> ```
 - [ ] ``` <case> ::= HEX47 <case-cond> HEX42 <expr> ```
 - [ ] ``` <default> ::= HEX44 <expr> | "" ```
-- [ ] ``` <case-cond> ::= <literal> | <decons>  ```
-- [ ] ``` <decons> ::= <pro-id> "(" <com-id-list> ")" ```
-- [ ] ``` <com-id-list> ::= <com-ids> | "" ```
-- [ ] ``` <com-ids> ::= <com-ids> "," COM_ID | COM_ID ```
+- [x] ``` <case-cond> ::= <literal> | <decons>  ```
+- [x] ``` <decons> ::= <pro-id> "(" <com-id-list> ")" ```
+- [x] ``` <com-id-list> ::= <com-ids> | "" ```
+- [x] ``` <com-ids> ::= <com-ids> "," COM_ID | COM_ID ```
 
 - [ ] ``` <while> ::= TRIG3 <expr> <step> HEX31 <block> ```
 - [ ] ``` <repeat> ::= HEX27 <block> HEX25 <expr> <step> ```
-- [ ] ``` <step> ::= HEX28 <block> | "" ```
+- [x] ``` <step> ::= HEX28 <block> | "" ```
 
-- [ ] ``` <free> ::= TRIG4 <addr> ```
+- [x] ``` <free> ::= TRIG4 <addr> ```
 
-- [ ] ``` <break> ::= HEX30 ```
-- [ ] ``` <continue> ::= HEX26 ```
+- [x] ``` <break> ::= HEX30 ```
+- [x] ``` <continue> ::= HEX26 ```
 - [ ] ``` <return> ::= HEX62 <expr> ```
 
 - [ ] ``` <expr> ::= "{" <stmts> ENDL <expr> "}"
@@ -95,7 +95,6 @@
 - [x] ``` <unary-ops> ::= <unary-ops> <unary-op> ```
 - [x] ``` <unary-op> ::= "@" | "$" | "~" | "!" | "-" ```
 
-- [ ] ``` <expr> ::= <expr> SYM_ID_L5 <expr> ```
 - [x] ``` <expr-9> ::= <literal>
            | <com-id>
            | <malloc>  

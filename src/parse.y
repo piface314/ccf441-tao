@@ -153,7 +153,20 @@ param: COM_ID ':' type_id;
 
 type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
-expr: literal | com_id;
+case_cond: literal | decons;
+decons: pro_id '(' com_id_list ')';
+com_id_list: com_ids 
+    |
+    ;
+com_ids: com_ids ',' COM_ID | COM_ID;
+
+step: HEX28 block
+free: TRIG4 addr;
+break: HEX30;
+continue: HEX26;
+
+expr: literal 
+    | com_id;
 
 expr_addr: expr_addr '[' expr ']'
         | expr_addr '.' COM_ID
@@ -212,6 +225,8 @@ expr_list: exprs
     |
     ;
 exprs: exprs ',' expr;
+
+block: '{' stmts '}' | stmt;
 
 scope: scope PRO_ID '.' | ;
 pro_id: scope PRO_ID {$$ = $2;};
