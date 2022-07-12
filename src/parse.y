@@ -42,14 +42,15 @@
 %token <string_val> SYM_ID_N4 SYM_ID_L3 SYM_ID_L2
 %token <string_val> SYM_ID_L1 SYM_ID_R1 SYM_ID_N1
 
-%nonassoc SYM_ID_N1
-%right SYM_ID_R1
-%left SYM_ID_L1
+%nonassoc SYM_ID_N1 SYM_ID_R1 SYM_ID_L1
+%right SYM_ID_N1 SYM_ID_R1 SYM_ID_L1
+%left SYM_ID_N1 SYM_ID_R1 SYM_ID_L1
 %left SYM_ID_L2
 %left SYM_ID_L3
 %nonassoc SYM_ID_N4
-%right SYM_ID_R5
-%left  SYM_ID_L5
+%right SYM_ID_R5 SYM_ID_L5
+%left  SYM_ID_R5 SYM_ID_L5
+%nonassoc SYM_ID_R5 SYM_ID_L5
 %left  SYM_ID_L6
 %left  SYM_ID_L7
 %right SYM_ID_R8
