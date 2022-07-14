@@ -1,10 +1,12 @@
 ||| Module |||::: x231, Tree
 
+||: Some.Other.Module
 ||: Math
 ||: Math ||:||: M
 ||: Math ||::|| sin, cos, tan
 
-yin x: Int = 5
+yin x: @Tree(Int)
+yin f: [5]@(Int, Real) |||::| @Char
 
 
 yang +>(x: Real, y: Real): Real = '\n'
@@ -12,12 +14,6 @@ yang +>(x: Real, y: Real): Real = '\n'
 '''
 
 yin x: [3][2]Int = [[0, 1], [0, 1], [0, 1]]
-
-
-
- @Int
- @x
-
-  Int
-@@x
+    x[0]  [2]Int
+    x[0][0]  Int
 '''

@@ -1,7 +1,7 @@
 TARGET := taoc
-SRC := hash symtable lex.yy y.tab
+SRC := hash list defs symtable lex.yy y.tab
 OBJS := $(addprefix obj/,$(addsuffix .o,$(SRC)))
-CCFLAGS := -O2 -Wall -lm
+CCFLAGS := -O2 -Wall -g
 LDFLAGS := -Wall
 YACCFLAGS := -Wother -Wconflicts-sr
 
@@ -29,4 +29,4 @@ src/%.yy.c: src/%.l src/y.tab.h
 	flex -o src/$*.yy.c src/$*.l
 
 clean:
-	rm obj/* bin/* src/y.tab.* src/*.yy.c
+	rm obj/* bin/* src/y.tab.*

@@ -1,7 +1,8 @@
 #include "symtable.h"
 
 HashKey SymTable_entrykey(HashEntry entry) {
-    return ((SymTableEntry *)entry)->id;
+    SymTableEntry *e = (SymTableEntry *)entry;
+    return e->id ? e->id->id : NULL;
 }
 
 SymbolTable *SymTable_new(SymbolTable *parent) {
@@ -25,8 +26,60 @@ void SymTable_append(SymbolTable *child, SymbolTable *parent) {
     current->sibling = child;
 }
 
+void SymEntry_show_scope(ScopeNode *p) {
+    if (p == NULL)
+        return;
+    SymEntry_show_scope(p->scope);
+    printf("%s.", p->id);
+}
+
+void SymEntry_show_id(IdNode *p) {
+    if (p == NULL)
+        return;
+    SymEntry_show_scope(p->scope);
+    printf("%s", p->id);
+}
+
+void SymEntry_show_ptr(PtrTypeNode *p) {
+    if (p == NULL)
+        return;
+    SymEntry_show_ptr(p->ptr_t);
+    if (p->size)
+        printf("[%d]", p->size);
+    else
+        printf("@");
+}
+
+void SymEntry_show_type(TypeNode *p) {
+    if (p == NULL) {
+        printf("_");
+        return;
+    }
+    SymEntry_show_ptr(p->ptr_t);
+    if (p->tag == NT_VAR_TYPE) {
+        SymEntry_show_id(p->id);
+        if (p->arity == 0)
+            return;
+    }
+    printf("(");
+    for (int i = 0; i < p->arity; ++i) {
+        if (i) printf(", ");
+        SymEntry_show_type(p->params[i]);
+    }
+    printf(")");
+    if (p->tag == NT_FUN_TYPE) {
+        printf(" |||::| ");
+        SymEntry_show_type(p->params[p->arity]);
+    } else if (p->tag == NT_PROC_TYPE) {
+        printf(" |||:||");
+    }
+}
+
 void SymEntry_show(SymTableEntry *entry) {
-    printf("%s\n", entry->id);
+    SymEntry_show_id(entry->id);
+    printf(": ");
+    SymEntry_show_type(entry->type);
+    printf("\n");
 }
 
 void SymTable_show_r(int offset, SymbolTable *t) {
@@ -58,4 +111,11 @@ void SymTable_install(SymTableEntry *entry, SymbolTable *t) {
     HashTable *ht = Hash_add(entry, &t->table);
     if (ht != &t->table)
         t->table = *ht;
+}
+
+SymTableEntry *SymTableEntry_new(IdNode *id, TypeNode *type) {
+    SymTableEntry *entry = malloc(sizeof(SymTableEntry));
+    entry->id = id;
+    entry->type = type;
+    return entry;
 }

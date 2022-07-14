@@ -15,7 +15,8 @@ HashTable *Hash_new(size_t entry_size, HashKey (*key)(HashEntry), size_t size) {
     Hash_weights(table);
     for (size_t i = 0; i < size; ++i) {
         HashKey ekey = key(Hash_at(i, table));
-        ekey[0] = 0;
+        if (ekey)
+            ekey[0] = 0;
     }
     return table;
 }
@@ -51,8 +52,9 @@ HashTable *Hash_add(HashEntry entry, HashTable *table) {
     size_t i = 0;
     size_t h = Hash_h1(table->key(entry), table);
     size_t h2 = Hash_h2(table->key(entry), table);
+    HashKey k = NULL;
 
-    while (table->key(Hash_at((h + i * h2) % table->size, table))[0] && i < table->size)
+    while ((k = table->key(Hash_at((h + i * h2) % table->size, table))) && k[0] && i < table->size)
         i++;
 
     if (i >= table->size)
@@ -66,19 +68,20 @@ HashEntry Hash_get(HashKey key, HashTable *table) {
     size_t i = 0;
     size_t h = Hash_h1(key, table);
     size_t h2 = Hash_h2(key, table);
+    HashKey k = NULL;
     
-    while (strcmp(table->key(Hash_at((h + i * h2) % table->size, table)), key) != 0 && i < table->size)
+    while ((k = table->key(Hash_at((h + i * h2) % table->size, table))) && strcmp(k, key) != 0 && i < table->size)
         i++;
 
     HashEntry entry = Hash_at((h + i * h2) % table->size, table);
-    return strcmp(table->key(entry), key) == 0 ? entry : NULL;
+    return (k = table->key(entry)) && strcmp(k, key) == 0 ? entry : NULL;
 }
 
 void Hash_show(HashTable *table) {
     printf("=========\n");
     for (size_t i = 0; i < table->size; ++i) {
         HashKey key = table->key(Hash_at(i, table));
-        if (key[0])
+        if (key && key[0])
             printf("[%lu]: %s\n", i, key);
     }
     printf("=========\n");
@@ -88,7 +91,7 @@ size_t Hash_size(HashTable *table) {
     size_t n = 0;
     for (size_t i = 0; i < table->size; ++i) {
         HashKey key = table->key(Hash_at(i, table));
-        if (key[0])
+        if (key && key[0])
             n++;
     }
     return n;
@@ -100,7 +103,7 @@ void **Hash_entries(HashTable *table) {
     for (size_t i = 0; i < table->size; ++i) {
         void *entry = Hash_at(i, table);
         HashKey key = table->key(entry);
-        if (key[0])
+        if (key && key[0])
             entries[j++] = entry;
     }
     entries[j] = NULL;
