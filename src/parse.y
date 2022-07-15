@@ -8,8 +8,9 @@
     void yyerror_(const char *msg, YYLTYPE loc);
     int yylex();
 
-    SymbolTable *root;
-    SymbolTable *env;
+    int with_type_params = 0;
+    SymbolTable *root = NULL;
+    SymbolTable *env = NULL;
 %}
 
 /* Definições */
@@ -59,7 +60,8 @@
 
 %type <string_val> sym_id_
 %type <node> scope pro_id com_id sym_id export_id type_id type_ptr
-%type <list> exports type_param_list type_params
+%type <node> param
+%type <list> exports type_param_list type_params param_list params
 
 %%
 /* Regras / Produções */
@@ -109,20 +111,18 @@ stmt:
     | var_def
     | type_def
     | type_alias
-    ;
-    /* 
     | call
-    | if
-    | match
-    | while
-    | repeat
-    | free
-    | break
-    | continue
-    | return
-    | expr
+    /* | if */
+    /* | match */
+    /* | while */
+    /* | repeat */
+    /* | free */
+    /* | break */
+    /* | continue */
+    /* | return */
+    /* | expr */
     |
-    ; */
+    ;
 
 import: TRIG6 pro_id 
       | TRIG6 pro_id HEX51 exports {
@@ -138,29 +138,67 @@ import: TRIG6 pro_id
         }
       ;
 
-var_def:
-    YIN COM_ID ':' type_id             { SymTable_install(SymTableEntry_new((IdNode*)Node_pro_id(NULL, $2.s), (TypeNode*)$4), env); }
-    | YIN COM_ID ':' type_id '=' expr  { SymTable_install(SymTableEntry_new((IdNode*)Node_pro_id(NULL, $2.s), (TypeNode*)$4), env); }
-    ;
+var_def: YIN COM_ID ':' type_id {
+            IdNode *id_node = (IdNode*)Node_pro_id(NULL, $2.s);
+            SymTable_install(SymTableEntry_new(id_node, (TypeNode*)$4), env);
+        }
+       | YIN COM_ID ':' type_id '=' expr  {
+            IdNode *id_node = (IdNode*)Node_pro_id(NULL, $2.s);
+            SymTable_install(SymTableEntry_new(id_node, (TypeNode*)$4), env);
+        }
+       ;
 
-def_type_params: HEX03 type_params;
+def_type_params: HEX03 type_params ENDL {
+        with_type_params = 1;
+        env = SymTable_new(env);
+    };
 
 callable_def: func_def | op_def | proc_def;
 
-func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' expr;
+func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' {
+    IdNode *id_node = (IdNode*)Node_com_id(NULL, $2.s);
+    TypeNode *t_node = (TypeNode*)Node_fun_type(NULL, NULL, List_push($7, $4));
+    if (with_type_params) {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env->parent);
+    } else {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env);
+        env = SymTable_new(env);
+    }
+} expr { env = env->parent, with_type_params = 0; } ;
 
-op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' expr;
+op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' {
+    IdNode *id_node = (IdNode*)Node_sym_id(NULL, $2.s);
+    List *params = List_push($9, List_push($6, List_push($4, NULL)));
+    TypeNode *t_node = (TypeNode*)Node_fun_type(NULL, NULL, params);
+    if (with_type_params) {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env->parent);
+    } else {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env);
+        env = SymTable_new(env);
+    }
+} expr { env = env->parent, with_type_params = 0; } ;
 
-proc_def: WUJI COM_ID '(' param_list ')' stmt;
+proc_def: WUJI COM_ID '(' param_list ')' {
+    IdNode *id_node = (IdNode*)Node_com_id(NULL, $2.s);
+    TypeNode *t_node = (TypeNode*)Node_proc_type(NULL, NULL, $4);
+    if (with_type_params) {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env->parent);
+    } else {
+        SymTable_install(SymTableEntry_new(id_node, t_node), env);
+        env = SymTable_new(env);
+    }
+} stmt { env = env->parent, with_type_params = 0; } ;
 
 
 type_def: TRIG0 PRO_ID type_param_list '=' constructors;
 constructors: constructors ',' constructor | constructor;
 constructor: PRO_ID '(' param_list ')' | PRO_ID;
 
-param_list: params | ;
-params: params ',' param | param;
-param: COM_ID ':' type_id;
+param_list: params { $$ = $1; } | { $$ = NULL; } ;
+params: params ',' param { $$ = List_push($3, $1); }
+      | param            { $$ = List_push($1, NULL); }
+      ;
+param: COM_ID ':' type_id { $$ = Node_yin($1.s, $3); } ;
 
 type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
@@ -225,20 +263,20 @@ expr_list: exprs
 exprs: exprs ',' expr;
 
 scope: scope PRO_ID '.' { $$ = Node_scope($1, $2.s); } | {$$ = NULL;} ;
-pro_id: scope PRO_ID { $$ = Node_pro_id($1, $2.s); };
-com_id: scope COM_ID { $$ = Node_com_id($1, $2.s); };
+pro_id: scope PRO_ID  { $$ = Node_pro_id($1, $2.s); };
+com_id: scope COM_ID  { $$ = Node_com_id($1, $2.s); };
 sym_id: scope sym_id_ { $$ = Node_sym_id($1, $2.s); } ; 
-sym_id_: SYM_ID_R8 { $$ = $1; }
-       | SYM_ID_L7 { $$ = $1; }
-       | SYM_ID_L6 { $$ = $1; }
-       | SYM_ID_L5 { $$ = $1; }
-       | SYM_ID_R5 { $$ = $1; }
-       | SYM_ID_N4 { $$ = $1; }
-       | SYM_ID_L3 { $$ = $1; }
-       | SYM_ID_L2 { $$ = $1; }
-       | SYM_ID_L1 { $$ = $1; }
-       | SYM_ID_R1 { $$ = $1; }
-       | SYM_ID_N1 { $$ = $1; }
+sym_id_: SYM_ID_R8    { $$ = $1; }
+       | SYM_ID_L7    { $$ = $1; }
+       | SYM_ID_L6    { $$ = $1; }
+       | SYM_ID_L5    { $$ = $1; }
+       | SYM_ID_R5    { $$ = $1; }
+       | SYM_ID_N4    { $$ = $1; }
+       | SYM_ID_L3    { $$ = $1; }
+       | SYM_ID_L2    { $$ = $1; }
+       | SYM_ID_L1    { $$ = $1; }
+       | SYM_ID_R1    { $$ = $1; }
+       | SYM_ID_N1    { $$ = $1; }
        ;
 
 type_param_list: '(' type_params ')' {$$ = $2;} | {$$ = NULL;} ;

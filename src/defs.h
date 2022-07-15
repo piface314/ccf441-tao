@@ -63,7 +63,7 @@ typedef struct type_node {
     PtrTypeNode *ptr_t;
     IdNode *id;
     int arity;
-    struct type_node **params;
+    ASTNode **params;
 } TypeNode;
 
 ASTNode *Node_var_type(ASTNode *ptr, ASTNode *id, List *params);
@@ -75,6 +75,8 @@ typedef struct {
     char *id;
     TypeNode *type;
 } YinNode;
+
+ASTNode *Node_yin(char *id, ASTNode *type);
 
 typedef struct {
     NodeTag tag;
@@ -91,13 +93,14 @@ typedef struct {
 } WujiNode;
 
 typedef union ast_node {
-  YinNode yin_node;
-  YangNode yang_node;
-  WujiNode wuji_node;
-  ScopeNode scope_node;
-  IdNode id_node;
-  TypeNode type_node;
-  PtrTypeNode ptr_type_node;
+    NodeTag tag;
+    YinNode yin_node;
+    YangNode yang_node;
+    WujiNode wuji_node;
+    ScopeNode scope_node;
+    IdNode id_node;
+    TypeNode type_node;
+    PtrTypeNode ptr_type_node;
 } ASTNode;
 
 #endif

@@ -50,11 +50,12 @@ void SymEntry_show_ptr(PtrTypeNode *p) {
         printf("@");
 }
 
-void SymEntry_show_type(TypeNode *p) {
-    if (p == NULL) {
+void SymEntry_show_type(ASTNode *p_) {
+    if (p_ == NULL) {
         printf("_");
         return;
     }
+    TypeNode *p = (p_->tag == NT_YIN) ? ((YinNode *)p_)->type : (TypeNode *)p_;
     SymEntry_show_ptr(p->ptr_t);
     if (p->tag == NT_VAR_TYPE) {
         SymEntry_show_id(p->id);
