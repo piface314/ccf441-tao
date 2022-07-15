@@ -138,18 +138,18 @@ ENDL: Fim de linha (pode ser \n ou ;)
 <unary-ops> ::= <unary-ops> <unary-op>
 <unary-op> ::= "@" | "$" | "~" | "!" | "-"
 
-<expr> ::= <expr> SYM_ID_L5 <expr>
-<expr_1>: <expr_1> SYM_ID_L1 <expr_1> 
-    | <expr_1> SYM_ID_N1 <expr_1> 
-    | <expr_1> SYM_ID_R1 <expr_1>
-    | <expr_1> SYM_ID_L2 <expr_1>
-    | <expr_1> SYM_ID_L3 <expr_1>
-    | <expr_1> SYM_ID_N4 <expr_1>
-    | <expr_1> SYM_ID_R5 <expr_1>
-    | <expr_1> SYM_ID_L5 <expr_1>
-    | <expr_1> SYM_ID_L6 <expr_1>
-    | <expr_1> SYM_ID_L7 <expr_1>
-    | <expr_1> SYM_ID_R8 <expr_1>
+<expr_1>: <expr_1> SYM_ID_L1 <expr_9> 
+    | <expr_1> SYM_ID_N1 <expr_9> 
+    | <expr_1> SYM_ID_R1 <expr_9>
+    | <expr_1> SYM_ID_L2 <expr_9>
+    | <expr_1> SYM_ID_L3 <expr_9>
+    | <expr_1> SYM_ID_N4 <expr_9>
+    | <expr_1> SYM_ID_R5 <expr_9>
+    | <expr_1> SYM_ID_L5 <expr_9>
+    | <expr_1> SYM_ID_L6 <expr_9>
+    | <expr_1> SYM_ID_L7 <expr_9>
+    | <expr_1> SYM_ID_R8 <expr_9>
+    | <expr_1>
     
 <expr-9> ::= <literal>
            | <com-id>

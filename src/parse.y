@@ -42,7 +42,7 @@
 %token <string_val> SYM_ID_N4 SYM_ID_L3 SYM_ID_L2
 %token <string_val> SYM_ID_L1 SYM_ID_R1 SYM_ID_N1
 
-%nonassoc SYM_ID_N1
+%nonassoc SYM_ID_N1 
 %right SYM_ID_R1
 %left SYM_ID_L1
 %left SYM_ID_L2
@@ -53,6 +53,10 @@
 %left  SYM_ID_L6
 %left  SYM_ID_L7
 %right SYM_ID_R8
+%nonassoc TRIG2 TRIG5
+%nonassoc HEX18 HEX47
+%nonassoc HEX19 HEX44
+
 
 %type <string_val> pro_id
 
@@ -106,8 +110,6 @@ stmt:
     | var_def
     | type_def
     | type_alias
-    ;
-    /* 
     | call
     | if
     | match
@@ -119,7 +121,7 @@ stmt:
     | return
     | expr
     |
-    ; */
+    ;
 
 import:
     TRIG6 pro_id
@@ -153,6 +155,16 @@ param: COM_ID ':' type_id;
 
 type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
+if: TRIG2 expr HEX20 stmt elif else;
+elif: elif HEX18 expr HEX20 stmt;
+else: else HEX19 stmt;
+
+match: TRIG5 expr cases
+    | TRIG5 expr cases default %prec HEX47;
+cases: cases case 
+    | case %prec HEX47;
+case: HEX47 case_cond HEX42 expr;
+default: HEX44 expr;
 case_cond: literal | decons;
 decons: pro_id '(' com_id_list ')';
 com_id_list: com_ids 
@@ -160,13 +172,20 @@ com_id_list: com_ids
     ;
 com_ids: com_ids ',' COM_ID | COM_ID;
 
+while: TRIG3 expr step HEX32 block;
+repeat: HEX27 block HEX25 expr step;
 step: HEX28 block
 free: TRIG4 addr;
 break: HEX30;
 continue: HEX26;
+return: HEX62 expr;
 
-expr: literal 
-    | com_id;
+expr: '{' stmts ENDL expr '}'
+    | if
+    | match
+    | assign
+    | expr_addr
+    ;
 
 expr_addr: expr_addr '[' expr ']'
         | expr_addr '.' COM_ID
@@ -174,19 +193,20 @@ expr_addr: expr_addr '[' expr ']'
 
 expr_unary: unary_ops expr_1 | expr_1
 unary_ops: unary_ops unary_op;
-unary_op: '@' | '$' | '~' | '!' | '-';
+unary_op: '@' | '$' | '~' | '!' | '-' %prec SYM_ID_N4;
 
-expr_1: expr_1 SYM_ID_L1 expr_1 
-    | expr_1 SYM_ID_N1 expr_1 
-    | expr_1 SYM_ID_R1 expr_1
-    | expr_1 SYM_ID_L2 expr_1
-    | expr_1 SYM_ID_L3 expr_1
-    | expr_1 SYM_ID_N4 expr_1
-    | expr_1 SYM_ID_R5 expr_1
-    | expr_1 SYM_ID_L5 expr_1
-    | expr_1 SYM_ID_L6 expr_1
-    | expr_1 SYM_ID_L7 expr_1
-    | expr_1 SYM_ID_R8 expr_1
+expr_1: expr_1 SYM_ID_L1 expr_9
+    | expr_1 SYM_ID_N1 expr_9
+    | expr_1 SYM_ID_R1 expr_9
+    | expr_1 SYM_ID_L2 expr_9
+    | expr_1 SYM_ID_L3 expr_9
+    | expr_1 SYM_ID_N4 expr_9
+    | expr_1 SYM_ID_R5 expr_9
+    | expr_1 SYM_ID_L5 expr_9
+    | expr_1 SYM_ID_L6 expr_9
+    | expr_1 SYM_ID_L7 expr_9
+    | expr_1 SYM_ID_R8 expr_9
+    | expr_1
     ;
 
 
