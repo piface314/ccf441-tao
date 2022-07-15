@@ -63,7 +63,7 @@
 %%
 /* Regras / Produções */
 program:
-    module_decl top_stmts
+    module_decl stmts
     ;
 
 module_decl:
@@ -82,20 +82,6 @@ export_id:
     | sym_id
     ;
 
-top_stmts:
-    top_stmts ENDL top_stmt
-    | top_stmt
-    ;
-
-top_stmt:
-    import
-    | callable_def
-    | def_type_params callable_def
-    | var_def
-    | type_def
-    | type_alias
-    |
-    ;
 
 stmts:
     stmts ENDL stmt
@@ -111,7 +97,7 @@ stmt:
     | type_def
     | type_alias
     | call
-    | if
+    /* | if */
     | match
     | while
     | repeat
@@ -135,19 +121,7 @@ var_def:
     ;
 
 def_type_params: HEX03 type_params;
-
 callable_def: func_def | op_def | proc_def;
-
-func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' expr;
-
-op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' expr;
-
-proc_def: WUJI COM_ID '(' param_list ')' stmt;
-
-
-type_def: TRIG0 PRO_ID type_param_list '=' constructors;
-constructors: constructors ',' constructor | constructor;
-constructor: PRO_ID '(' param_list ')' | PRO_ID;
 
 param_list: params | ;
 params: params ',' param | param;
@@ -155,9 +129,33 @@ param: COM_ID ':' type_id;
 
 type_alias: HEX00 PRO_ID type_param_list '=' type_id;
 
-if: TRIG2 expr HEX20 stmt elif else;
-elif: elif HEX18 expr HEX20 stmt;
-else: else HEX19 stmt;
+type_id:
+    type_ptr pro_id type_param_list
+    | type_ptr HEX57 type_param_list HEX57 type_id
+    | type_ptr HEX57 type_param_list
+    ;
+
+type_ptr:
+    type_ptr '@'
+    | type_ptr '[' INTEGER ']'
+    |
+    ;
+
+type_param_list: '(' type_params ')' | ;
+
+type_params: type_params ',' type_id | type_id;
+
+func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' expr;
+op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' expr;
+proc_def: WUJI COM_ID '(' param_list ')' stmt;
+type_def: TRIG0 PRO_ID type_param_list '=' constrs;
+constrs: constrs ',' constr | constr;
+constr: PRO_ID '(' param_list ')' | PRO_ID;
+
+
+/* if: TRIG2 expr HEX20 stmt elif else;
+elif: elif HEX18 stmt HEX20 expr;
+else: else HEX19 stmt; */
 
 match: TRIG5 expr cases
     | TRIG5 expr cases default %prec HEX47;
@@ -171,30 +169,28 @@ com_id_list: com_ids
     |
     ;
 com_ids: com_ids ',' COM_ID | COM_ID;
-
-while: TRIG3 expr step HEX32 block;
-repeat: HEX27 block HEX25 expr step;
-step: HEX28 block
+while: TRIG3 expr step HEX32 stmt;
+repeat: HEX27 stmts HEX25 expr step;
+step: HEX28 stmts;
 free: TRIG4 addr;
 break: HEX30;
 continue: HEX26;
 return: HEX62 expr;
 
 expr: '{' stmts ENDL expr '}'
-    | if
-    | match
-    | assign
-    | expr_addr
+    | literal
+    | com_id
+    /* | assign
+    | expr_addr */
     ;
 
-expr_addr: expr_addr '[' expr ']'
+/* expr_addr: expr_addr '[' expr ']'
         | expr_addr '.' COM_ID
         | expr_unary;
 
-expr_unary: unary_ops expr_1 | expr_1
+expr_unary: unary_ops expr_1 | expr_1;
 unary_ops: unary_ops unary_op;
 unary_op: '@' | '$' | '~' | '!' | '-' %prec SYM_ID_N4;
-
 expr_1: expr_1 SYM_ID_L1 expr_9
     | expr_1 SYM_ID_N1 expr_9
     | expr_1 SYM_ID_R1 expr_9
@@ -209,25 +205,12 @@ expr_1: expr_1 SYM_ID_L1 expr_9
     | expr_1
     ;
 
-
 expr_9: literal
     | com_id
     | malloc
     | build
     | call
     | '(' expr ')'
-    ;
-
-assign: addr '=' expr;
-
-addr: addr '[' expr ']'
-    | addr '.' COM_ID
-    | addr_0
-    ;
-
-addr_0: ptrs addr_1;
-addr_1: com_id
-    | '(' addr ')'
     ;
 
 malloc: malloc_type type_id malloc_n
@@ -240,13 +223,19 @@ malloc_n: HEX11 INTEGER
     ;
 
 build: pro_id | pro_id '(' exprs ')';
-call: com_id '(' expr_list ')';
-expr_list: exprs 
-    |
-    ;
-exprs: exprs ',' expr;
 
-block: '{' stmts '}' | stmt;
+assign: addr '=' expr; */
+addr: addr '[' expr ']'
+    | addr '.' COM_ID
+    | addr_0
+    ;
+addr_0: ptrs addr_1;
+addr_1: com_id
+    | '(' addr ')'
+    ;
+
+call: com_id '(' exprs ')';
+exprs: exprs ',' expr | ;
 
 scope: scope PRO_ID '.' | ;
 pro_id: scope PRO_ID {$$ = $2;};
@@ -257,20 +246,6 @@ sym_id_:
     | SYM_ID_R5 | SYM_ID_N4 | SYM_ID_L3 | SYM_ID_L2
     | SYM_ID_L1 | SYM_ID_R1 | SYM_ID_N1;
 
-type_param_list: '(' type_params ')' | ;
-type_params: type_params ',' type_id | type_id;
-type_id:
-    type_ptr pro_id type_param_list
-    | type_ptr HEX57 type_param_list HEX57 type_id
-    | type_ptr HEX57 type_param_list
-    ;
-
-type_ptr:
-    type_ptr '@'
-    | type_ptr '[' INTEGER ']'
-    |
-    ;
-
 ptrs: ptrs '@' | ;
 
 literal:
@@ -279,7 +254,6 @@ literal:
     | CHAR
     | STRING
     ;
-
 %%
 
 /* Código auxiliar */
