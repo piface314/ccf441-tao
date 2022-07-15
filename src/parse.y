@@ -31,6 +31,10 @@
 %token HEX48 HEX49 HEX50 HEX51 HEX52 HEX53 HEX54 HEX55
 %token HEX56 HEX57 HEX58 HEX59 HEX60 HEX61 HEX62 HEX63
 
+%token IFX ELIFX
+%token PREFIX
+%token SUFFIX
+
 %token ENDL
 %token WUJI YIN YANG
 %token <int_val> INTEGER
@@ -42,6 +46,9 @@
 %token <string_val> SYM_ID_N4 SYM_ID_L3 SYM_ID_L2
 %token <string_val> SYM_ID_L1 SYM_ID_R1 SYM_ID_N1
 
+%right '='
+%nonassoc IFX
+%nonassoc ELIFX
 %nonassoc SYM_ID_N1 
 %right SYM_ID_R1
 %left SYM_ID_L1
@@ -52,10 +59,10 @@
 %left  SYM_ID_L5
 %left  SYM_ID_L6
 %left  SYM_ID_L7
+%nonassoc PREFIX
+%nonassoc SUFFIX
 %right SYM_ID_R8
-%nonassoc TRIG2 TRIG5
-%nonassoc HEX18 HEX47
-%nonassoc HEX19 HEX44
+
 
 
 %type <string_val> pro_id
@@ -63,7 +70,7 @@
 %%
 /* Regras / Produções */
 program:
-    module_decl stmts
+    module_decl top_stmts
     ;
 
 module_decl:
@@ -82,23 +89,27 @@ export_id:
     | sym_id
     ;
 
+top_stmts:
+    top_stmts ENDL top_stmt
+    | top_stmt
+    ;
+
+top_stmt: import
+        | callable_def
+        | def_type_params callable_def
+        | var_def
+        | type_def
+        | type_alias
+        |
+        ;
+
 
 stmts:
     stmts ENDL stmt
     | stmt
     ;
 
-stmt:
-    '{' stmts '}'
-    | import
-    | callable_def
-    | def_type_params callable_def
-    | var_def
-    | type_def
-    | type_alias
-    | call
-    /* | if */
-    | match
+stmt: top_stmt
     | while
     | repeat
     | free
@@ -106,7 +117,6 @@ stmt:
     | continue
     | return
     | expr
-    |
     ;
 
 import:
@@ -153,89 +163,74 @@ constrs: constrs ',' constr | constr;
 constr: PRO_ID '(' param_list ')' | PRO_ID;
 
 
-/* if: TRIG2 expr HEX20 stmt elif else;
-elif: elif HEX18 stmt HEX20 expr;
-else: else HEX19 stmt; */
+if: TRIG2 expr HEX20 stmt elif else
+elif: elif HEX18 expr HEX20 stmt | ;
+else: HEX19 stmt | ;
 
 match: TRIG5 expr cases
-    | TRIG5 expr cases default %prec HEX47;
+    | TRIG5 expr cases default;
 cases: cases case 
-    | case %prec HEX47;
-case: HEX47 case_cond HEX42 expr;
-default: HEX44 expr;
+    | case;
+case: HEX47 case_cond HEX42 stmt;
+default: HEX44 stmt;
 case_cond: literal | decons;
 decons: pro_id '(' com_id_list ')';
 com_id_list: com_ids 
     |
     ;
 com_ids: com_ids ',' COM_ID | COM_ID;
-while: TRIG3 expr step HEX32 stmt;
-repeat: HEX27 stmts HEX25 expr step;
-step: HEX28 stmts;
+
+while: TRIG3 expr step HEX31 stmt;
+repeat: HEX27 stmt HEX25 expr step;
+step: HEX28 stmt;
 free: TRIG4 addr;
 break: HEX30;
 continue: HEX26;
 return: HEX62 expr;
 
-expr: '{' stmts ENDL expr '}'
-    | literal
-    | com_id
-    /* | assign
-    | expr_addr */
-    ;
-
-/* expr_addr: expr_addr '[' expr ']'
-        | expr_addr '.' COM_ID
-        | expr_unary;
-
-expr_unary: unary_ops expr_1 | expr_1;
-unary_ops: unary_ops unary_op;
-unary_op: '@' | '$' | '~' | '!' | '-' %prec SYM_ID_N4;
-expr_1: expr_1 SYM_ID_L1 expr_9
-    | expr_1 SYM_ID_N1 expr_9
-    | expr_1 SYM_ID_R1 expr_9
-    | expr_1 SYM_ID_L2 expr_9
-    | expr_1 SYM_ID_L3 expr_9
-    | expr_1 SYM_ID_N4 expr_9
-    | expr_1 SYM_ID_R5 expr_9
-    | expr_1 SYM_ID_L5 expr_9
-    | expr_1 SYM_ID_L6 expr_9
-    | expr_1 SYM_ID_L7 expr_9
-    | expr_1 SYM_ID_R8 expr_9
-    | expr_1
-    ;
-
-expr_9: literal
-    | com_id
+expr: '{' stmts '}'
+    | match
+    | if
+    | assign
+    | expr SYM_ID_L1 expr
+    | expr SYM_ID_N1 expr
+    | expr SYM_ID_R1 expr
+    | expr SYM_ID_L2 expr
+    | expr SYM_ID_L3 expr
+    | expr SYM_ID_N4 expr
+    | expr SYM_ID_R5 expr
+    | expr SYM_ID_L5 expr
+    | expr SYM_ID_L6 expr
+    | expr '-' expr %prec SYM_ID_L6
+    | expr SYM_ID_L7 expr
+    | expr SYM_ID_R8 expr
+    | '@' expr %prec PREFIX
+    | '~' expr %prec PREFIX 
+    | '!' expr %prec PREFIX 
+    | '-' expr %prec PREFIX
+    | addr
     | malloc
     | build
     | call
+    | literal
     | '(' expr ')'
     ;
 
-malloc: malloc_type type_id malloc_n
-    | malloc_type expr malloc_n
+malloc: TRIG1 type_id malloc_n | HEX13 expr ;
+malloc_n: HEX11 INTEGER | ;
+
+assign: addr '=' expr;
+addr: addr '[' expr ']' %prec SUFFIX
+    | addr '.' COM_ID %prec SUFFIX
+    | addr '@' %prec SUFFIX
+    | com_id
     ;
 
-malloc_type: TRIG1 | HEX12;
-malloc_n: HEX11 INTEGER
-    |
-    ;
+build: pro_id | pro_id '(' expr_list ')';
+call: com_id '(' expr_list ')';
 
-build: pro_id | pro_id '(' exprs ')';
-
-assign: addr '=' expr; */
-addr: addr '[' expr ']'
-    | addr '.' COM_ID
-    | addr_0
-    ;
-addr_0: ptrs addr_1;
-addr_1: com_id
-    | '(' addr ')'
-    ;
-
-call: com_id '(' exprs ')';
-exprs: exprs ',' expr | ;
+expr_list: exprs | ;
+exprs: exprs ',' expr | expr ;
 
 scope: scope PRO_ID '.' | ;
 pro_id: scope PRO_ID {$$ = $2;};
@@ -244,9 +239,7 @@ sym_id: scope sym_id_;
 sym_id_:
     SYM_ID_R8 | SYM_ID_L7 | SYM_ID_L6 | SYM_ID_L5
     | SYM_ID_R5 | SYM_ID_N4 | SYM_ID_L3 | SYM_ID_L2
-    | SYM_ID_L1 | SYM_ID_R1 | SYM_ID_N1;
-
-ptrs: ptrs '@' | ;
+    | SYM_ID_L1 | SYM_ID_R1 | SYM_ID_N1 | '-';
 
 literal:
     INTEGER

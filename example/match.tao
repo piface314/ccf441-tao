@@ -1,24 +1,23 @@
-yin i: Int = 0 \
-  + 3
+yin i: Int = 0 + 3
 
 yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
   yin itemKey: K = getKey(item)
   yin newLeaf: @Tree(K, T) = ::| Tree(K, T)
-  |:| @tree
-  |:|||| Node(k, l, r) |:|:|:
-    '' :|: = if
-    '' :|:|:: = then
-    '' :|::|: = elif
-    '' :|::|| = else
-    :|: itemKey < k :|:|::
-      tree.lt = add(item, l)
-    :|::||
-      tree.rt = add(item, r)
+  |:| @tree \
+  |:|||| Node(k, l, r) |:|:|: \
+      '' :|: = if 
+      '' :|:|:: = then 
+      '' :|::|: = elif 
+      '' :|::|| = else
+    :|: itemKey < k :|:|:: \
+      tree.lt = add(item, l) \
+    :|::|| \
+      tree.rt = add(item, r) \
   |:|||| Leaf(i) |:|:|: {
     yin leafKey: K = getKey(i)
-    :|: itemKey < leafKey :|:|::
-      ::| Node(leafKey, newLeaf, tree)
-    :|::||
-      ::| Node(itemKey, tree, newLeaf)
+    :|: itemKey < leafKey :|:|:: \
+      ::||:| Node(leafKey, newLeaf, tree) \
+    :|::|| \
+      ::||:| Node(itemKey, tree, newLeaf)
   }
 }

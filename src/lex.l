@@ -79,11 +79,11 @@ yin                         {return YIN;}
 yang                        {return YANG;}
 {trigram}                   {return TRIG0 + tri_hex_val();}
 {hexagram}                  {return HEX00 + tri_hex_val();}
-[@:=\.]                     {return *yytext;}
+[@:=\.\-]                   {return *yytext;}
 {special}                   {return *yytext;}
 \*\*                        {return str_token(SYM_ID_R8);}
 [*/&^]                      {return str_token(SYM_ID_L7);}
-[+\-\|]                     {return str_token(SYM_ID_L6);}
+[+\|]                       {return str_token(SYM_ID_L6);}
 (\<\<|\>\>)                 {return str_token(SYM_ID_L5);}
 \<\>                        {lexerror("%d:%d: %s: operator `<>` not allowed.\n");}
 \<\<{symbol}+               {return str_token(SYM_ID_L1);}

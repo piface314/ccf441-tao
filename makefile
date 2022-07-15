@@ -3,11 +3,12 @@ SRC := hash symtable lex.yy y.tab
 OBJS := $(addprefix obj/,$(addsuffix .o,$(SRC)))
 CCFLAGS := -O2 -Wall -lm
 LDFLAGS := -Wall
-YACCFLAGS := -Wother -Wconflicts-sr
+YACCFLAGS := -Wother -Wconflicts-sr -Wconflicts-rr -v
 
 all: bin/$(TARGET)
 
 bin/$(TARGET): $(OBJS)
+	mkdir -p bin
 	gcc -o bin/$(TARGET) $(OBJS) $(LDFLAGS)
 
 obj/%.o: src/%.c src/%.h src/defs.h
