@@ -83,8 +83,11 @@
 
 %%
 /* Regras / Produções */
+
+// Regra inicial
 program: module_decl { env = SymTable_new(env); } top_stmts ;
 
+// Declaração de módulo
 module_decl: TRIG7 pro_id HEX56 exports ENDL | ;
 
 exports: exports ',' export_id { $$ = List_push($3, $1); }
@@ -96,94 +99,79 @@ export_id: COM_ID  { $$ = Node_com_id(loc(@1), $1); }
          | sym_id_ { $$ = Node_sym_id(loc(@1), $1); }
          ;
 
-top_stmts:
-    top_stmts ENDL top_stmt
-    | top_stmt
-    ;
+// Comandos que podem aparecer no escopo do topo
+top_stmts: top_stmts ENDL top_stmt
+         | top_stmt
+         ;
 
 top_stmt: import                        { $$ = NULL; }
-        | callable_def                  { $$ = $1; }
-        | def_type_params callable_def  { $$ = NULL; }
-        | var_def                       { $$ = $1; }
         | type_def                      { $$ = $1; }
         | type_alias                    { $$ = $1; }
+        | callable_def                  { $$ = $1; }
+        | call_type_params callable_def  { $$ = NULL; }
+        | var_def                       { $$ = $1; }
         |                               { $$ = NULL; }
         ;
 
-stmts: stmts ENDL stmt 
-     | stmt
-     ;
-
-stmt: top_stmt { $$ = NULL; }
-    | while    { $$ = NULL; }
-    | repeat   { $$ = NULL; }
-    | free     { $$ = NULL; }
-    | break    { $$ = NULL; }
-    | continue { $$ = NULL; }
-    | return   { $$ = NULL; }
-    | expr     { $$ = NULL; }
-    ;
-
+// Importação de outros módulos
 import: TRIG6 pro_id 
       | TRIG6 pro_id HEX51 exports
       | TRIG6 pro_id HEX54 PRO_ID 
       ;
 
-var_def: YIN COM_ID ':' type_id {
-            $$ = Node_yin(loc(@1), $2, $4, NULL);
-            SymTable_install(SymTableEntry_new($$), env);
-        }
-       | YIN COM_ID ':' type_id '=' expr  {
-            $$ = Node_yin(loc(@1), $2, $4, $6);
-            SymTable_install(SymTableEntry_new($$), env);
-        }
-       ;
 
-def_type_params: HEX03 type_params {
-        with_type_params = 1;
-        env = SymTable_new(env);
-        for (List *c = $2; c; c = c->tail) {
-            IdNode *id = (IdNode *)c->item;
-            ASTNode *p = Node_def_type_alias(id->loc, id->id);
+// Definição de novos tipos
+type_def: TRIG0 PRO_ID type_param_list '=' <node>{
+        ASTNode *decl = Node_type_decl(loc(@2), $2, $3);
+        $$ = Node_type_def(loc(@1), decl);
+        SymTable_install(SymTableEntry_new($$), env);
+    }[def] constrs[cs] {
+        for (List *c = $cs; c; c = c->tail) {
+            ASTNode *t = (ASTNode *)$def->type_def_node.decl;
+            ASTNode *p = Node_adj_constr(t, (ASTNode *)c->item);
             SymTable_install(SymTableEntry_new(p), env);
-            free(id);
         }
+        $$ = Node_adj_type_def($cs, $def);
     };
 
-callable_def: func_def { $$ = $1; }
-            | op_def   { $$ = $1; }
-            | proc_def { $$ = $1; }
-            ;
-
-param_list: params { $$ = $1; } | { $$ = NULL; } ;
-params: params ',' param { $$ = List_push($3, $1); }
-      | param            { $$ = List_push($1, NULL); }
+constrs: constrs ',' constr { $$ = List_push($3, $1); }
+       | constr             { $$ = List_push($1, NULL); }
+       ;
+constr: PRO_ID '(' param_list ')' { $$ = Node_constructor(loc(@1), $1, $3); }
+      | PRO_ID                    { $$ = Node_constructor(loc(@1), $1, NULL); }
       ;
-param: COM_ID ':' type_id { $$ = Node_yin(loc(@1), $1, $3, NULL); } ;
 
+// Declaração de tipos, dá um novo nome a um tipo já existente
 type_alias: HEX00 PRO_ID type_param_list '=' type_id {
         ASTNode *decl = Node_type_decl(loc(@2), $2, $3);
         $$ = Node_type_alias(loc(@1), decl, $5);
         SymTable_install(SymTableEntry_new($$), env);
     };
 
-type_id:
-    type_ptr pro_id type_arg_list          { $$ = Node_var_type(loc(@2), $1, $2, $3);  }
-    | type_ptr type_arg_list HEX57 type_id { $$ = Node_fun_type(loc(@2), $1, List_push($4, $2)); }
-    | type_ptr type_arg_list HEX59         { $$ = Node_proc_type(loc(@2), $1, $2); }
-    ;
-
-type_ptr:
-    type_ptr '@'               { $$ = Node_ptr_type(loc(@2), $1, 0); }
-    | type_ptr '[' INTEGER ']' { $$ = Node_ptr_type(loc(@2), $1, $3); }
-    |                          { $$ = NULL; }
-    ;
-
 type_param_list: '(' type_params ')' { $$ = $2; } | { $$ = NULL; } ;
 type_params: type_params ',' PRO_ID  { $$ = List_push(Node_pro_id(loc(@3), $3), $1); }
            | PRO_ID                  { $$ = List_push(Node_pro_id(loc(@1), $1), NULL); }
            ;
 
+// Parâmetros de tipo temporários para funções e procedimentos
+call_type_params: HEX03 type_params {
+        with_type_params = 1;
+        env = SymTable_new(env);
+        for (List *c = $2; c; c = c->tail) {
+            IdNode *id = (IdNode *)c->item;
+            ASTNode *p = Node_call_type_alias(id->loc, id->id);
+            SymTable_install(SymTableEntry_new(p), env);
+            free(id);
+        }
+    };
+
+// Definição de funções e procedimentos
+callable_def: func_def { $$ = $1; }
+            | op_def   { $$ = $1; }
+            | proc_def { $$ = $1; }
+            ;
+
+// Definição de função
 func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' <node>{
         ASTNode *t = Node_fun_type(loc(@4), NULL, List_push($7, $4));
         $$ = Node_yang(loc(@1), $2, t, NULL);
@@ -200,6 +188,7 @@ func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' <node>{
         $$ = $def;
     } ;
 
+// Definição de operador (função com identificador de símbolo)
 op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' <node>{
         List *params = List_push($6, List_push($4, NULL));
         List *p_ret = List_push($9, params);
@@ -219,6 +208,7 @@ op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' <node>{
         $$ = $def;
     } ;
 
+// Definição de procedimento
 proc_def: WUJI COM_ID '(' param_list ')' <node>{
         ASTNode *t = Node_proc_type(loc(@4), NULL, $4);
         $$ = Node_wuji(loc(@1), $2, t, NULL);
@@ -235,57 +225,56 @@ proc_def: WUJI COM_ID '(' param_list ')' <node>{
         $$ = $def;
     } ;
 
-
-type_def: TRIG0 PRO_ID type_param_list '=' <node>{
-        ASTNode *decl = Node_type_decl(loc(@2), $2, $3);
-        $$ = Node_type_def(loc(@1), decl);
-        SymTable_install(SymTableEntry_new($$), env);
-    }[def] constrs[cs] {
-        for (List *c = $cs; c; c = c->tail) {
-            ASTNode *t = (ASTNode *)$def->type_def_node.decl;
-            ASTNode *p = Node_adj_constr(t, (ASTNode *)c->item);
-            SymTable_install(SymTableEntry_new(p), env);
-        }
-        $$ = Node_adj_type_def($cs, $def);
-    };
-
-
-
-constrs: constrs ',' constr { $$ = List_push($3, $1); }
-       | constr             { $$ = List_push($1, NULL); }
-       ;
-constr: PRO_ID '(' param_list ')' { $$ = Node_constructor(loc(@1), $1, $3); }
-      | PRO_ID                    { $$ = Node_constructor(loc(@1), $1, NULL); }
+param_list: params { $$ = $1; } | { $$ = NULL; } ;
+params: params ',' param { $$ = List_push($3, $1); }
+      | param            { $$ = List_push($1, NULL); }
       ;
+param: COM_ID ':' type_id { $$ = Node_yin(loc(@1), $1, $3, NULL); } ;
 
+// Definição de variável
+var_def: YIN COM_ID ':' type_id {
+            $$ = Node_yin(loc(@1), $2, $4, NULL);
+            SymTable_install(SymTableEntry_new($$), env);
+        }
+       | YIN COM_ID ':' type_id '=' expr  {
+            $$ = Node_yin(loc(@1), $2, $4, $6);
+            SymTable_install(SymTableEntry_new($$), env);
+        }
+       ;
 
-if: TRIG2 expr HEX20 stmt elif else
-elif: elif HEX18 expr HEX20 stmt | ;
-else: HEX19 stmt | ;
+// Comandos gerais
+stmts: stmts ENDL stmt 
+     | stmt
+     ;
 
-match: TRIG5 expr cases
-    | TRIG5 expr cases default;
-cases: cases case 
-    | case;
-case: HEX47 case_cond HEX42 stmt;
-default: HEX44 stmt;
-case_cond: literal | decons;
-decons: pro_id '(' com_id_list ')'; // TODO: adicionar as variaveis na tabela de símbolos
-com_id_list: com_ids | ; 
-com_ids: com_ids ',' COM_ID | COM_ID;
+stmt: top_stmt { $$ = NULL; }
+    | while    { $$ = NULL; }
+    | repeat   { $$ = NULL; }
+    | free     { $$ = NULL; }
+    | break    { $$ = NULL; }
+    | continue { $$ = NULL; }
+    | return   { $$ = NULL; }
+    | expr     { $$ = NULL; }
+    ;
 
+// Comandos de repetição
 while: TRIG3 expr step HEX31 stmt;
 repeat: HEX27 stmt HEX25 expr step;
-step: HEX28 stmt;
-free: TRIG4 addr;
+step: HEX28 stmt | ;
+
+// Controle de fluxo
 break: HEX30;
 continue: HEX26;
 return: HEX62 expr;
 
-expr: '{' stmts '}'                 { $$ = NULL; }
+// Liberação de memória
+free: TRIG4 addr;
+
+// Expressões
+expr: '{' stmts '}'                 { $$ = NULL; } // TODO: tabela de símbolos
+    | assign                        { $$ = NULL; }
     | match                         { $$ = NULL; }
     | if                            { $$ = NULL; }
-    | assign                        { $$ = NULL; }
     | expr SYM_ID_L1 expr           { $$ = NULL; }
     | expr QSYM_ID_L1 expr          { $$ = NULL; }
     | expr SYM_ID_N1 expr           { $$ = NULL; }
@@ -313,17 +302,15 @@ expr: '{' stmts '}'                 { $$ = NULL; }
     | '~' expr %prec PREFIX         { $$ = NULL; }
     | '!' expr %prec PREFIX         { $$ = NULL; }
     | '-' expr %prec PREFIX         { $$ = NULL; }
-    | addr                          { $$ = NULL; }
     | malloc                        { $$ = NULL; }
     | build                         { $$ = NULL; }
     | call                          { $$ = NULL; }
+    | addr                          { $$ = NULL; }
     | literal                       { $$ = NULL; }
     | '(' expr ')'                  { $$ = $2; }
     ;
 
-malloc: TRIG1 type_id malloc_n | HEX13 expr ;
-malloc_n: HEX11 INTEGER | ;
-
+// Expressão de atribuição
 assign: addr '=' expr;
 addr: addr '[' expr ']' %prec SUFFIX
     | addr '.' COM_ID %prec SUFFIX
@@ -331,12 +318,56 @@ addr: addr '[' expr ']' %prec SUFFIX
     | com_id
     ;
 
+// Expressão condicional
+if: TRIG2 expr HEX20 stmt elif else
+elif: elif HEX18 expr HEX20 stmt | ;
+else: HEX19 stmt | ;
+
+// Expressão de casamento de tipo
+match: TRIG5 expr cases default;
+cases: cases case | case ;
+case: HEX47 case_cond HEX42 stmt;
+default: HEX44 stmt | ;
+case_cond: literal | decons;
+decons: pro_id '(' com_id_list ')'; // TODO: adicionar as variaveis na tabela de símbolos
+com_id_list: com_ids | ; 
+com_ids: com_ids ',' COM_ID | COM_ID;
+
+// Expressão de alocação de memória
+malloc: TRIG1 type_id malloc_n
+      | HEX13 expr malloc_n
+      ;
+malloc_n: HEX11 expr | ;
+
+// Chamada de construtor de tipo
 build: pro_id | pro_id '(' expr_list ')';
+
+// Chamada de função ou procedimento
 call: com_id '(' expr_list ')';
 
 expr_list: exprs | ;
 exprs: exprs ',' expr | expr ;
 
+// Identificador de tipo
+type_id:
+    type_ptr pro_id type_arg_list          { $$ = Node_var_type(loc(@2), $1, $2, $3);  }
+    | type_ptr type_arg_list HEX57 type_id { $$ = Node_fun_type(loc(@2), $1, List_push($4, $2)); }
+    | type_ptr type_arg_list HEX59         { $$ = Node_proc_type(loc(@2), $1, $2); }
+    ;
+
+type_ptr:
+    type_ptr '@'               { $$ = Node_ptr_type(loc(@2), $1, 0); }
+    | type_ptr '[' INTEGER ']' { $$ = Node_ptr_type(loc(@2), $1, $3); }
+    |                          { $$ = NULL; }
+    ;
+
+type_arg_list: '(' type_args ')' { $$ = $2; } | { $$ = NULL; } ;
+type_args: type_args ',' type_id { $$ = List_push($3, $1); }
+         | type_id               { $$ = List_push($1, NULL); }
+         ;
+
+
+// Auxiliares para lidar com identificadores
 pro_id: pro_id_ { $$ = Node_pro_id(loc(@1), $1); } ;
 pro_id_: PRO_ID { $$ = $1;} | QPRO_ID { $$ = $1;} ;
 com_id: com_id_  { $$ = Node_com_id(loc(@1), $1); } ;
@@ -355,11 +386,7 @@ sym_id_: SYM_ID_R8 { $$ = $1; }
        | '-'       { $$ = "-"; }
        ;
 
-type_arg_list: '(' type_args ')' { $$ = $2; } | { $$ = NULL; } ;
-type_args: type_args ',' type_id { $$ = List_push($3, $1); }
-         | type_id               { $$ = List_push($1, NULL); }
-         ;
-
+// Auxiliar para uma literal qualquer
 literal: INTEGER
        | REAL
        | CHAR

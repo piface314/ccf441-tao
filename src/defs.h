@@ -35,7 +35,7 @@ typedef enum {
     NT_IMPORT_AS = 0x62,
     NT_TYPE_DEF = 0x80,
     NT_TYPE_ALIAS = 0x90,
-    NT_DEF_TYPE_ALIAS = 0x91,
+    NT_CALL_TYPE_ALIAS = 0x91,
 } NodeTag;
 
 typedef union ast_node ASTNode;
@@ -113,7 +113,7 @@ typedef struct {
 } TypeAliasNode;
 
 ASTNode *Node_type_alias(Loc loc, ASTNode *decl, ASTNode *type);
-ASTNode *Node_def_type_alias(Loc loc, char *id);
+ASTNode *Node_call_type_alias(Loc loc, char *id);
 
 typedef struct {
     NodeTag tag;

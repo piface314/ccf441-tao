@@ -116,9 +116,9 @@ ASTNode *Node_type_alias(Loc loc, ASTNode *decl, ASTNode *type) {
     return node;
 }
 
-ASTNode *Node_def_type_alias(Loc loc, char *id) {
+ASTNode *Node_call_type_alias(Loc loc, char *id) {
     ASTNode *decl = Node_type_decl(loc, id, NULL);
     ASTNode *node = Node_type_alias(loc, decl, NULL);
-    node->tag = NT_DEF_TYPE_ALIAS;
+    node->tag = NT_CALL_TYPE_ALIAS;
     return node;
 }
