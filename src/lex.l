@@ -21,12 +21,12 @@
   #define STR_BUFFER_SIZE 0x1000 
 
   int started = 0;
-  int str_token(int tk);
+  int id_token(int tk);
   int char_int_val(char c);
   int int_val(int base, int i0);
   double real_val();
   char unescape(char c);
-  String string_val();
+  char *string_val();
   int tri_hex_val();
   void lexerror(char *msg);
   
@@ -44,16 +44,17 @@
 
 ws            [ \n\t\r\v\f]
 ws_space      [\n\t\r\v\f]
-ws_newline    [ \t\r\v\f]
 small         [a-z_]
 large         [A-Z]
 digit         [0-9]
 hexit         [0-9A-Fa-f]
-symbol        [!#$%&*+\./<=>?@^\|\-~:]
+symbol        [!@#$%&*+/<=>?^\|\\\-~:]
 special       [\(\),\[\]\{\}]
 symid         {symbol}+
+relop         ==|!=|\<|\<=|\>=|\>
 comid         {small}({small}|{large}|{digit})*
 proid         {large}({small}|{large}|{digit})*
+qualify       ({proid}\.)+
 decimal       {digit}+
 exponent      [eE][+-]?{decimal}
 real          ({decimal}\.{decimal}{exponent}?|{decimal}{exponent})
@@ -63,9 +64,7 @@ trigram       [\|:]{3,3}
 hexagram      [\|:]{6,6}
 
 %%
-{ws_newline}+               {/* ignore */}
-{ws}+                       {return ENDL;}
-\\{ws}+                     {/* ignore */}
+{ws}+                       {/* ignore */}
 ;                           {return ENDL;}
 ''                          {BEGIN(COMMENT);}
 <COMMENT>\n                 {BEGIN(INITIAL);}
@@ -81,21 +80,22 @@ yang                        {return YANG;}
 {hexagram}                  {return HEX00 + tri_hex_val();}
 [@:=\.\-]                   {return *yytext;}
 {special}                   {return *yytext;}
-\*\*                        {return str_token(SYM_ID_R8);}
-[*/&^]                      {return str_token(SYM_ID_L7);}
-[+\|]                       {return str_token(SYM_ID_L6);}
-(\<\<|\>\>)                 {return str_token(SYM_ID_L5);}
-\<\>                        {lexerror("%d:%d: %s: operator `<>` not allowed.\n");}
-\<\<{symbol}+               {return str_token(SYM_ID_L1);}
-{symbol}+\>\>               {return str_token(SYM_ID_R1);}
-\<{symbol}+                 {return str_token(SYM_ID_L5);}
-{symbol}+\>                 {return str_token(SYM_ID_R5);}
-(==|!=|\<|\<=|\>=|\>)       {return str_token(SYM_ID_N4);}
-&&                          {return str_token(SYM_ID_L3);}
-\|\|                        {return str_token(SYM_ID_L2);}
-{symid}                     {return str_token(SYM_ID_N1);}
-{comid}                     {return str_token(COM_ID);}
-{proid}                     {return str_token(PRO_ID);}
+{qualify}?\*\*              {return id_token(SYM_ID_R8);}
+{qualify}?[*/&^]            {return id_token(SYM_ID_L7);}
+{qualify}?[+\|]             {return id_token(SYM_ID_L6);}
+{qualify}\-                 {return id_token(SYM_ID_L6);}
+{qualify}?(\<\<|\>\>)       {return id_token(SYM_ID_L5);}
+{qualify}?\<\>              {lexerror("operator `<>` not allowed");}
+{qualify}?\<\<{symbol}+     {return id_token(SYM_ID_L1);}
+{qualify}?{symbol}+\>\>     {return id_token(SYM_ID_R1);}
+{qualify}?\<{symbol}+       {return id_token(SYM_ID_L5);}
+{qualify}?{symbol}+\>       {return id_token(SYM_ID_R5);}
+{qualify}?{relop}           {return id_token(SYM_ID_N4);}
+{qualify}?&&                {return id_token(SYM_ID_L3);}
+{qualify}?\|\|              {return id_token(SYM_ID_L2);}
+{qualify}?{symid}           {return id_token(SYM_ID_N1);}
+{qualify}?{comid}           {return id_token(COM_ID);}
+{qualify}?{proid}           {return id_token(PRO_ID);}
 {decimal}                   {yylval.int_val = int_val(10, 0); return INTEGER;}
 0[xX]{hexit}+               {yylval.int_val = int_val(16, 2); return INTEGER;}
 {real}                      {yylval.real_val = real_val(); return REAL;}
@@ -116,9 +116,11 @@ yang                        {return YANG;}
 
 /* Código auxiliar */
 
-int str_token(int tk) {
-  yylval.string_val.s = strdup(yytext);
-  yylval.string_val.n = yyleng;
+int id_token(int tk) {
+  yylval.string_val = strdup(yytext);
+  for (int i = 0; yytext[i]; ++i)
+    if (yytext[i] == '.')
+      return tk+1;
   return tk;
 }
 
@@ -188,12 +190,8 @@ char unescape(char c) {
   }
 }
 
-String string_val() {
-  String str = {
-    .s = strdup(buffer),
-    .n = (size_t)(s - buffer)
-  };
-  return str;
+char *string_val() {
+  return strdup(buffer);
 }
 
 int tri_hex_val() {

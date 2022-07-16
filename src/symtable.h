@@ -6,9 +6,10 @@
 #include <string.h>
 
 #include "hash.h"
+#include "defs.h"
 
 typedef struct {
-    char id[KEYMAX];
+    ASTNode *node;
 } SymTableEntry;
 
 typedef struct symbol_table {
@@ -21,5 +22,6 @@ SymbolTable *SymTable_new(SymbolTable *parent);
 void SymTable_append(SymbolTable *child, SymbolTable *parent);
 void SymTable_show(SymbolTable *t);
 void SymTable_install(SymTableEntry *entry, SymbolTable *t);
+SymTableEntry *SymTableEntry_new(ASTNode *node);
 
 #endif
