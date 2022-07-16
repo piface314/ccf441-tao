@@ -5,6 +5,11 @@
 ||: Math ||:||: M
 ||: Math ||::|| sin, cos, tan
 
+::: Tree(K) = Node(key: K, left: @Tree(K), right: @Tree(K)), \
+              Leaf(item: K)
+
+:::::: ITree = Tree(Int)
+
 yin x: @Tree(Int)
 yin f: [5]@(Int, Real) |||::| @Char
 

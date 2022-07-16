@@ -99,7 +99,7 @@ size_t Hash_size(HashTable *table) {
 
 void **Hash_entries(HashTable *table) {
     size_t j = 0;
-    void **entries = malloc(sizeof(void *) * table->size);
+    void **entries = malloc(sizeof(void *) * (table->size + 1));
     for (size_t i = 0; i < table->size; ++i) {
         void *entry = Hash_at(i, table);
         HashKey key = table->key(entry);

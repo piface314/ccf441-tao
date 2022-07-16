@@ -2,7 +2,19 @@
 
 HashKey SymTable_entrykey(HashEntry entry) {
     SymTableEntry *e = (SymTableEntry *)entry;
-    return e->id ? e->id->id : NULL;
+    ASTNode *node = e->node;
+    if (node == NULL)
+        return NULL;
+    switch (node->tag & NTMASK) {
+    case NT_DEF:
+        return node->def_node.id;
+    case NT_TYPE_DEF:
+        return node->type_def_node.decl->id->id;
+    case NT_TYPE_ALIAS:
+        return node->type_alias_node.decl->id->id;
+    default:
+        return NULL;
+    }
 }
 
 SymbolTable *SymTable_new(SymbolTable *parent) {
@@ -55,12 +67,15 @@ void SymEntry_show_type(ASTNode *p_) {
         printf("_");
         return;
     }
-    TypeNode *p = (p_->tag == NT_YIN) ? ((YinNode *)p_)->type : (TypeNode *)p_;
+    TypeNode *p = (p_->tag == NT_YIN) ? ((DefNode *)p_)->type : (TypeNode *)p_;
     SymEntry_show_ptr(p->ptr_t);
     if (p->tag == NT_VAR_TYPE) {
         SymEntry_show_id(p->id);
         if (p->arity == 0)
             return;
+    } else if (p->tag & NT_ID) {
+        SymEntry_show_id((IdNode *)p);
+        return;
     }
     printf("(");
     for (int i = 0; i < p->arity; ++i) {
@@ -77,9 +92,24 @@ void SymEntry_show_type(ASTNode *p_) {
 }
 
 void SymEntry_show(SymTableEntry *entry) {
-    SymEntry_show_id(entry->id);
-    printf(": ");
-    SymEntry_show_type(entry->type);
+    ASTNode *node = entry->node;
+    Loc loc = node->id_node.loc;
+    printf("[%3d,%3d] ", loc.line, loc.col);
+    switch (node->tag & NTMASK) {
+    case NT_DEF:
+        printf("%8s: ", node->def_node.id);
+        SymEntry_show_type((ASTNode *)node->def_node.type);
+        break;
+    case NT_TYPE_DEF:
+        printf("%8s  ", "");
+        SymEntry_show_type((ASTNode *)node->type_def_node.decl);
+        break;
+    case NT_TYPE_ALIAS:
+        printf("%8s  ", "");
+        SymEntry_show_type((ASTNode *)node->type_alias_node.decl);
+        break;
+    default: printf("?");
+    }
     printf("\n");
 }
 
@@ -87,12 +117,12 @@ void SymTable_show_r(int offset, SymbolTable *t) {
     if (t == NULL) {
         for (int i = 0; i < offset; ++i)
             printf("    ");
-        printf("--//--\n");
+        printf("+================//=================+\n");
         return;
     }
     for (int i = 0; i < offset; ++i)
         printf("    ");
-    printf("+=======+\n");
+    printf("+===================================+\n");
     void **entries = Hash_entries(&t->table);
     for (int i = 0; entries[i] != NULL; ++i) {
         for (int i = 0; i < offset; ++i)
@@ -100,6 +130,10 @@ void SymTable_show_r(int offset, SymbolTable *t) {
         printf("| ");
         SymEntry_show(entries[i]);
     }
+    free(entries);
+    for (int i = 0; i < offset; ++i)
+        printf("    ");
+    printf("+================//=================+\n");
     for (SymbolTable *current = t->child; current != NULL; current = current->sibling)
         SymTable_show_r(offset + 1, current);
 }
@@ -114,9 +148,8 @@ void SymTable_install(SymTableEntry *entry, SymbolTable *t) {
         t->table = *ht;
 }
 
-SymTableEntry *SymTableEntry_new(IdNode *id, TypeNode *type) {
+SymTableEntry *SymTableEntry_new(ASTNode *node) {
     SymTableEntry *entry = malloc(sizeof(SymTableEntry));
-    entry->id = id;
-    entry->type = type;
+    entry->node = node;
     return entry;
 }
