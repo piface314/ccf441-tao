@@ -122,3 +122,23 @@ ASTNode *Node_call_type_alias(Loc loc, char *id) {
     node->tag = NT_CALL_TYPE_ALIAS;
     return node;
 }
+
+ASTNode *Node_decons(Loc loc, ASTNode *id, List *args, ASTNode *constr) {
+    int argc = List_size(args), i = 1;
+    DefNode **p = argc ? malloc(sizeof(DefNode *) * argc) : NULL;
+    for (List *c = args; c; c = c->tail, ++i) {
+        IdNode *id_ = &((ASTNode *)c->item)->id_node;
+        ASTNode *type = NULL;
+        if (constr != NULL && constr->tag == NT_CONSTRUCTOR
+            && argc-i < constr->def_node.type->arity)
+            type = constr->def_node.type->params[argc-i];
+        p[argc-i] = Node_yin(id_->loc, id_->id, type, NULL);
+    }
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->decons_node.tag = NT_DECONSTRUCT;
+    node->decons_node.loc = loc;
+    node->decons_node.id = (IdNode *)id;
+    node->decons_node.argc = argc;
+    node->decons_node.args = p;
+    return node;
+}

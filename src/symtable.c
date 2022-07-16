@@ -145,3 +145,13 @@ SymTableEntry *SymTableEntry_new(ASTNode *node) {
     entry->node = node;
     return entry;
 }
+
+SymTableEntry *SymTable_lookup(char *id, SymbolTable *t) {
+    SymTableEntry *entry = NULL;
+    for (; t; t = t->parent) {
+        entry = Hash_get(id, &t->table);
+        if (entry != NULL)
+            break;
+    }
+    return entry;
+}

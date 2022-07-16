@@ -23,5 +23,6 @@ void SymTable_append(SymbolTable *child, SymbolTable *parent);
 void SymTable_show(SymbolTable *t);
 void SymTable_install(SymTableEntry *entry, SymbolTable *t);
 SymTableEntry *SymTableEntry_new(ASTNode *node);
+SymTableEntry *SymTable_lookup(char *id, SymbolTable *t);
 
 #endif

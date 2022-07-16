@@ -1,15 +1,15 @@
-yin i: Int = 0
+yin test: Int = 0
   + 3;
 
-'' :|: = if 
-'' :|:|:: = then 
-'' :|::|: = elif 
-'' :|::|| = else
+::: Tree(K,T) = Node(k: K, left: @Tree, right: @Tree),
+                Leaf(i: T);
 
+:::::: ITree(K) = Tree(K, Int);
 
+::::|| K, T
 yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
     yin itemKey: K = getKey(item);
-    yin i: Int = 3 Test.+ 1;
+    yin i: Int = 3 + 1;
     yin newLeaf: @Tree(K, T) = ::| Tree(K, T);
     |:| @tree
     |:|||| Node(k, l, r) |:|:|:

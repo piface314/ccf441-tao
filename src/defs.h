@@ -36,6 +36,7 @@ typedef enum {
     NT_TYPE_DEF = 0x80,
     NT_TYPE_ALIAS = 0x90,
     NT_CALL_TYPE_ALIAS = 0x91,
+    NT_DECONSTRUCT = 0xA0
 } NodeTag;
 
 typedef union ast_node ASTNode;
@@ -126,6 +127,16 @@ typedef struct {
     } val;
 } LiteralNode;
 
+typedef struct {
+    NodeTag tag;
+    Loc loc;
+    IdNode *id;
+    int argc;
+    DefNode **args;
+} DeconsNode;
+
+ASTNode *Node_decons(Loc loc, ASTNode *id, List *args, ASTNode *constr);
+
 typedef union ast_node {
     NodeTag tag;
     DefNode def_node;
@@ -135,6 +146,7 @@ typedef union ast_node {
     ImportNode import_node;
     TypeDefNode type_def_node;
     TypeAliasNode type_alias_node;
+    DeconsNode decons_node;
 } ASTNode;
 
 #endif

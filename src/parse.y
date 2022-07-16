@@ -75,9 +75,9 @@
 %type <string_val> pro_id_ com_id_ sym_id_
 %type <node> pro_id com_id export_id type_id type_ptr
 %type <node> param expr stmt top_stmt var_def callable_def func_def op_def proc_def
-%type <node> type_def type_alias constr
+%type <node> type_def type_alias constr decons
 %type <list> exports type_arg_list type_args type_param_list type_params param_list params
-%type <list> constrs
+%type <list> constrs com_id_list com_ids
 
 %destructor { List_free($$); } <list>
 
@@ -149,8 +149,8 @@ type_alias: HEX00 PRO_ID type_param_list '=' type_id {
     };
 
 type_param_list: '(' type_params ')' { $$ = $2; } | { $$ = NULL; } ;
-type_params: type_params ',' PRO_ID  { $$ = List_push(Node_pro_id(loc(@3), $3), $1); }
-           | PRO_ID                  { $$ = List_push(Node_pro_id(loc(@1), $1), NULL); }
+type_params: type_params ',' PRO_ID { $$ = List_push(Node_type_decl(loc(@3), $3, NULL), $1); }
+           | PRO_ID                 { $$ = List_push(Node_type_decl(loc(@1), $1, NULL), NULL); }
            ;
 
 // Parâmetros de tipo temporários para funções e procedimentos
@@ -158,7 +158,7 @@ call_type_params: HEX03 type_params {
         with_type_params = 1;
         env = SymTable_new(env);
         for (List *c = $2; c; c = c->tail) {
-            IdNode *id = (IdNode *)c->item;
+            IdNode *id = ((TypeNode *)c->item)->id;
             ASTNode *p = Node_call_type_alias(id->loc, id->id);
             SymTable_install(SymTableEntry_new(p), env);
             free(id);
@@ -181,9 +181,10 @@ func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' <node>{
             SymTable_install(SymTableEntry_new($$), env);
             env = SymTable_new(env);
         }
+        with_type_params = 0;
         install_params($4);
     }[def] expr[body] {
-        env = env->parent, with_type_params = 0;
+        env = env->parent;
         $def->def_node.body = $body;
         $$ = $def;
     } ;
@@ -200,10 +201,11 @@ op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' <node>{
             SymTable_install(SymTableEntry_new($$), env);
             env = SymTable_new(env);
         }
+        with_type_params = 0;
         install_params(params);
         List_free(p_ret);
     }[def] expr[body] {
-        env = env->parent, with_type_params = 0;
+        env = env->parent;
         $def->def_node.body = $body;
         $$ = $def;
     } ;
@@ -218,9 +220,10 @@ proc_def: WUJI COM_ID '(' param_list ')' <node>{
             SymTable_install(SymTableEntry_new($$), env);
             env = SymTable_new(env);
         }
+        with_type_params = 0;
         install_params($4);
     }[def] stmt[body] {
-        env = env->parent, with_type_params = 0;
+        env = env->parent;
         $def->def_node.body = $body;
         $$ = $def;
     } ;
@@ -271,7 +274,10 @@ return: HEX62 expr;
 free: TRIG4 addr;
 
 // Expressões
-expr: '{' stmts '}'                 { $$ = NULL; } // TODO: tabela de símbolos
+expr: '{' { env = SymTable_new(env); } stmts '}' {
+            env = env->parent;
+            $$ = NULL;
+        }
     | assign                        { $$ = NULL; }
     | match                         { $$ = NULL; }
     | if                            { $$ = NULL; }
@@ -326,12 +332,23 @@ else: HEX19 stmt | ;
 // Expressão de casamento de tipo
 match: TRIG5 expr cases default;
 cases: cases case | case ;
-case: HEX47 case_cond HEX42 stmt;
+case: HEX47 literal HEX42 stmt
+    | HEX47 decons {
+        env = SymTable_new(env);
+        DeconsNode *p = (DeconsNode *)$2;
+        for (int i = 0; i < p->argc; ++i)
+            SymTable_install(SymTableEntry_new((ASTNode *)p->args[i]), env);
+    } HEX42 stmt { env = env->parent; }
+    ;
 default: HEX44 stmt | ;
-case_cond: literal | decons;
-decons: pro_id '(' com_id_list ')'; // TODO: adicionar as variaveis na tabela de símbolos
-com_id_list: com_ids | ; 
-com_ids: com_ids ',' COM_ID | COM_ID;
+decons: pro_id '(' com_id_list ')' {
+        // requer recursos da análse semântica
+        $$ = Node_decons(loc(@1), $1, $3, NULL);
+    };
+com_id_list: com_ids { $$ = $1; } | { $$ = NULL; } ;
+com_ids: com_ids ',' COM_ID { $$ = List_push(Node_com_id(loc(@3), $3), $1); }
+       | COM_ID             { $$ = List_push(Node_com_id(loc(@1), $1), NULL); }
+       ;
 
 // Expressão de alocação de memória
 malloc: TRIG1 type_id malloc_n

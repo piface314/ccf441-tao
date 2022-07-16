@@ -10,6 +10,7 @@ typedef struct list {
 } List;
 
 List *List_push(void *item, List *list);
+List *List_pop(List *list);
 void List_free(List *list);
 size_t List_size(List *list);
 

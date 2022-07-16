@@ -9,6 +9,12 @@ List *List_push(void *item, List *list) {
     return list_;
 }
 
+List *List_pop(List *list) {
+    List *tail = list->tail;
+    free(list);
+    return tail;
+}
+
 void List_free(List *list) {
     List *current = list, *tail;
     while ((tail = current->tail)) {
