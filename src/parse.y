@@ -14,6 +14,7 @@
     int with_type_params = 0;
     SymbolTable *root = NULL;
     SymbolTable *env = NULL;
+    List *errors = NULL;
 %}
 
 /* Definições */
@@ -38,9 +39,7 @@
 %token HEX48 HEX49 HEX50 HEX51 HEX52 HEX53 HEX54 HEX55
 %token HEX56 HEX57 HEX58 HEX59 HEX60 HEX61 HEX62 HEX63
 
-%token IFX ELIFX
 %token PREFIX
-%token SUFFIX
 
 %token ENDL
 %token WUJI YIN YANG
@@ -57,8 +56,6 @@
 %token <string_val> SYM_ID_N1 QSYM_ID_N1
 
 %right '='
-%nonassoc IFX
-%nonassoc ELIFX
 %nonassoc SYM_ID_N1 QSYM_ID_N1 
 %right SYM_ID_R1 QSYM_ID_R1
 %left SYM_ID_L1 QSYM_ID_L1
@@ -70,7 +67,6 @@
 %left  SYM_ID_L6 QSYM_ID_L6
 %left  SYM_ID_L7 QSYM_ID_L7
 %nonassoc PREFIX
-%nonassoc SUFFIX
 %right SYM_ID_R8 QSYM_ID_R8
 
 %type <string_val> pro_id_ com_id_ sym_id_
@@ -89,7 +85,11 @@
 program: module_decl { env = SymTable_new(env); } top_stmts ;
 
 // Declaração de módulo
-module_decl: TRIG7 pro_id HEX56 exports ENDL | ;
+module_decl: TRIG7 pro_id HEX56 exports ENDL
+           | TRIG7 error HEX56 exports ENDL { yyerror_("expected a proper identifier", @2); }
+           | TRIG7 pro_id error exports ENDL { yyerror_("expected |||:::", @3); }
+           |
+           ;
 
 exports: exports ',' export_id { $$ = List_push($3, $1); }
        | export_id             { $$ = List_push($1, NULL); }
@@ -98,11 +98,13 @@ exports: exports ',' export_id { $$ = List_push($3, $1); }
 export_id: COM_ID  { $$ = Node_com_id(loc(@1), $1); }
          | PRO_ID  { $$ = Node_pro_id(loc(@1), $1); }
          | sym_id_ { $$ = Node_sym_id(loc(@1), $1); }
+         | error   { $$ = Node_com_id(loc(@1), ""); yyerror_("expected a nonqualified identifier", @1); }
          ;
 
 // Comandos que podem aparecer no escopo do topo
 top_stmts: top_stmts ENDL top_stmt
          | top_stmt
+         | top_stmts error top_stmt { yyerror_("missing `;` in previous statement", @2); }
          ;
 
 top_stmt: import                        { $$ = NULL; }
@@ -247,8 +249,9 @@ var_def: YIN COM_ID ':' type_id {
        ;
 
 // Comandos gerais
-stmts: stmts ENDL stmt 
+stmts: stmts ENDL stmt
      | stmt
+     | stmts error stmt { yyerror_("missing `;` in previous statement", @2); }
      ;
 
 stmt: top_stmt { $$ = NULL; }
@@ -269,7 +272,8 @@ step: HEX28 stmt | ;
 // Controle de fluxo
 break: HEX30;
 continue: HEX26;
-return: HEX62 expr;
+return: HEX62
+      | HEX62 expr;
 
 // Liberação de memória
 free: TRIG4 addr;
@@ -319,9 +323,9 @@ expr: '{' { env = SymTable_new(env); } stmts '}' {
 
 // Expressão de atribuição
 assign: addr '=' expr;
-addr: addr '[' expr ']' %prec SUFFIX
-    | addr '.' COM_ID %prec SUFFIX
-    | addr '@' %prec SUFFIX
+addr: addr '[' expr ']'
+    | addr '.' COM_ID
+    | addr '@'
     | com_id
     ;
 
@@ -414,17 +418,16 @@ literal: INTEGER
 /* Código auxiliar */
 
 void yyerror(const char *msg) {
-    printf("\n\nTabela de Símbolos:\n");
-    SymTable_show(root);
-    fprintf(stdout, "\n\n%d:%d: syntax unbalance: %s\n", yylloc.first_line, yylloc.first_column, msg);
-    exit(1);
+    char *buffer = malloc(sizeof(char) * 128);
+    sprintf(buffer, "%d:%d: syntax unbalance: %s", yylloc.first_line, yylloc.first_column, msg);
+    errors = List_push(NULL, errors);
+    errors = List_push(buffer, errors);
 }
 
 void yyerror_(const char *msg, YYLTYPE loc) {
-    printf("\n\nTabela de Símbolos:\n");
-    SymTable_show(root);
-    fprintf(stdout, "\n\n%d:%d: syntax unbalance: %s\n", loc.first_line, loc.first_column, msg);
-    exit(1);
+    char *buffer = malloc(sizeof(char) * 128);
+    sprintf(buffer, "%d:%d: syntax unbalance: %s", loc.first_line, loc.first_column, msg);
+    errors = List_push(buffer, errors);
 }
 
 void init_symbol_table() {
@@ -466,7 +469,22 @@ int main() {
     yyparse();
     printf("\n\nTabela de Símbolos:\n");
     SymTable_show(root);
-    printf("\nSyntax is balanced.\n");
-    return 0;
+    int e = (int)List_size(errors);
+    if (e == 0) {
+        printf("\nSyntax is balanced.\n");
+        return 0;
+    }
+    char *msgs[e]; int i = 1;
+    for (List *c = errors; c; c = c->tail, ++i)
+        msgs[e-i] = (char *)c->item;
+    fprintf(stderr, "\n");
+    for (i = 0; i < e; ++i) {
+        if (msgs[i] == NULL)
+            continue;
+        if (i > 0 && msgs[i-1] == NULL && i+1 < e && msgs[i+1] != NULL)
+            continue;
+        fprintf(stderr, "%s\n", msgs[i]);
+    }
+    return 1;
 }
 

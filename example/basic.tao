@@ -15,11 +15,6 @@ yin g: @@(Int, Real) |||::| @Char;
 yin x: @Tree(Int);
 yin f: @@@(Int, Real) |||::| @Char;
 
-wuji main() {
-    yin a: Int = 0;
-    yin b: Char;
-};
-
 ::::|| K
 wuji show(s: @K) {
     yin buffer: @Char;
@@ -30,6 +25,12 @@ yang +>(x: Real, y: Real): Real = '\n';
 yang rand(): Int = M.randint(0, 10);
 
 yang upper(c: Char): Char = c;
+
+wuji main() {
+    yin a: Real = 0;
+    yin b: Real;
+    a +> b
+};
 
 '''
 

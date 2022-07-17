@@ -17,7 +17,7 @@ List *List_pop(List *list) {
 
 void List_free(List *list) {
     List *current = list, *tail;
-    while ((tail = current->tail)) {
+    while (current && (tail = current->tail)) {
         free(current);
         current = tail;
     }

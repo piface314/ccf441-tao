@@ -28,4 +28,4 @@ yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
 
 wuji main(argc: Int, argv: @@Char) {
 
-}
+};

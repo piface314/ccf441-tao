@@ -103,7 +103,7 @@ ENDL: Fim de linha (pode ser \n ou ;)
 
 <break> ::= HEX30
 <continue> ::= HEX26
-<return> ::= HEX62 <expr>
+<return> ::= HEX62 <expr> | HEX62
 
 <free> ::= TRIG4 <addr>
 
