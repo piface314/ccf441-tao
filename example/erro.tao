@@ -1,0 +1,9 @@
+yang fatorial(n: Int): Int = {
+    yin x: Int = 1
+    yin i: Int = 1;
+
+    :|| i <= n :|||:: i = i+1 :||||| {
+        x = x * i
+    };
+    |||||: x
+};
