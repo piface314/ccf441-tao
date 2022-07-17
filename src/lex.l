@@ -48,9 +48,10 @@ small         [a-z_]
 large         [A-Z]
 digit         [0-9]
 hexit         [0-9A-Fa-f]
+symbol_at     [!#$%&*+/<=>?^\|\\\-~:]
 symbol        [!@#$%&*+/<=>?^\|\\\-~:]
 special       [\(\),\[\]\{\}]
-symid         {symbol}+
+symid         {symbol_at}+|{symbol}*{symbol_at}{symbol}*
 relop         ==|!=|\<|\<=|\>=|\>
 comid         {small}({small}|{large}|{digit})*
 proid         {large}({small}|{large}|{digit})*

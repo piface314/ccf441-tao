@@ -8,6 +8,7 @@
     void yyerror_(const char *msg, YYLTYPE loc);
     int yylex();
     Loc loc(YYLTYPE l);
+    Loc no_loc();
     void install_params(List *params);
 
     int with_type_params = 0;
@@ -108,7 +109,7 @@ top_stmt: import                        { $$ = NULL; }
         | type_def                      { $$ = $1; }
         | type_alias                    { $$ = $1; }
         | callable_def                  { $$ = $1; }
-        | call_type_params callable_def  { $$ = NULL; }
+        | call_type_params callable_def { $$ = NULL; }
         | var_def                       { $$ = $1; }
         |                               { $$ = NULL; }
         ;
@@ -372,11 +373,10 @@ type_id:
     | type_ptr type_arg_list HEX59         { $$ = Node_proc_type(loc(@2), $1, $2); }
     ;
 
-type_ptr:
-    type_ptr '@'               { $$ = Node_ptr_type(loc(@2), $1, 0); }
-    | type_ptr '[' INTEGER ']' { $$ = Node_ptr_type(loc(@2), $1, $3); }
-    |                          { $$ = NULL; }
-    ;
+type_ptr: type_ptr '@'             { $$ = Node_ptr_type(loc(@2), $1, 0); }
+        | type_ptr '[' INTEGER ']' { $$ = Node_ptr_type(loc(@2), $1, $3); }
+        |                          { $$ = NULL; }
+        ;
 
 type_arg_list: '(' type_args ')' { $$ = $2; } | { $$ = NULL; } ;
 type_args: type_args ',' type_id { $$ = List_push($3, $1); }
@@ -429,17 +429,29 @@ void yyerror_(const char *msg, YYLTYPE loc) {
 
 void init_symbol_table() {
     root = SymTable_new(NULL);
+    char *types[4] = { "Int", "Char", "Real", "Any" };
+    ASTNode *p = NULL;
+    for (int i = 0; i < 4; ++i) {
+        p = Node_type_def(no_loc(), Node_type_decl(no_loc(), types[i], NULL));
+        SymTable_install(SymTableEntry_new(p), root);
+    }
+    p = Node_constructor(no_loc(), "Null", NULL);
+    ASTNode *t = Node_type_decl(no_loc(), "Any", NULL);
+    t->type_node.ptr_t = (PtrTypeNode *)Node_ptr_type(no_loc(), NULL, 0);
+    p = Node_adj_constr(t, p);
+    SymTable_install(SymTableEntry_new(p), root);
+    
     // TODO:
-    // adicionar os tipos predefinidos
-    // Any e Null
     // adicionar os operadores predefinidos
-    // adicionar as funções predefinidas (se tiver alguma)
+    // >>> vai ser omitido por hora, deixa pra análise semântica
 }
 
 Loc loc(YYLTYPE l) {
     Loc l_ = { .line = l.first_line, .col = l.first_column };
     return l_;
 }
+
+Loc no_loc() { Loc l = {.line=0, .col=0}; return l;}
 
 void install_params(List *params) {
     for (List *c = params; c; c = c->tail) {

@@ -1,5 +1,7 @@
 ||| Module |||::: x231, Tree;
 
+yin g: @@(Int, Real) |||::| @Char;
+
 ||: Some.Other.Module;
 ||: Math;
 ||: Math ||:||: M;
@@ -11,7 +13,7 @@
 :::::: ITree = Tree(Int);
 
 yin x: @Tree(Int);
-yin f: [5]@(Int, Real) |||::| @Char;
+yin f: @@@(Int, Real) |||::| @Char;
 
 wuji main() {
     yin a: Int = 0;

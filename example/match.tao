@@ -25,3 +25,7 @@ yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
             ::||:| Node(itemKey, tree, newLeaf)
       }
 };
+
+wuji main(argc: Int, argv: @@Char) {
+
+}
