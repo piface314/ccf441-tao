@@ -86,7 +86,7 @@ yang                        {return YANG;}
 {qualify}?[+\|]             {return id_token(SYM_ID_L6);}
 {qualify}\-                 {return id_token(SYM_ID_L6);}
 {qualify}?(\<\<|\>\>)       {return id_token(SYM_ID_L5);}
-{qualify}?\<\>              {lexerror("operator `<>` not allowed");}
+{qualify}?\<{symbol}*\>     {lexerror("invalid operator");}
 {qualify}?\<\<{symbol}+     {return id_token(SYM_ID_L1);}
 {qualify}?{symbol}+\>\>     {return id_token(SYM_ID_R1);}
 {qualify}?\<{symbol}+       {return id_token(SYM_ID_L5);}

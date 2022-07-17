@@ -104,7 +104,6 @@ export_id: COM_ID  { $$ = Node_com_id(loc(@1), $1); }
 // Comandos que podem aparecer no escopo do topo
 top_stmts: top_stmts ENDL top_stmt
          | top_stmt
-         | top_stmts error top_stmt { yyerror_("missing `;` in previous statement", @2); }
          ;
 
 top_stmt: import                        { $$ = NULL; }
@@ -251,7 +250,6 @@ var_def: YIN COM_ID ':' type_id {
 // Comandos gerais
 stmts: stmts ENDL stmt
      | stmt
-     | stmts error stmt { yyerror_("missing `;` in previous statement", @2); }
      ;
 
 stmt: top_stmt { $$ = NULL; }

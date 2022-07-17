@@ -9,7 +9,6 @@ yin test: Int = 0
 ::::|| K, T
 yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
     yin itemKey: K = getKey(item);
-    yin i: Int = 3 + 1;
     yin newLeaf: @Tree(K, T) = ::| Tree(K, T);
     |:| @tree
     |:|||| Node(k, l, r) |:|:|:

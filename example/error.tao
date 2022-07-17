@@ -1,5 +1,8 @@
-yin x: Int = 0xaff
-
-'' operador estranho
-yang :::|:: ``(x: Real, y: Real): Int = 2/(1/x + 1/y)
-
+yang fatorial(n: Int): Int = {
+    yin x: Int = 1;
+    yin i: Int = 1;
+    :|| i <= n :||:|| i = i+1 :||||| {
+        x = x * i
+    };
+    |||||: x
+};
