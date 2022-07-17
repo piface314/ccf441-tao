@@ -347,8 +347,8 @@ case: HEX47 literal HEX42 stmt
     ;
 default: HEX44 stmt | ;
 decons: pro_id '(' com_id_list ')' {
-        // requer recursos da análse semântica
-        $$ = Node_decons(loc(@1), $1, $3, NULL);
+        SymTableEntry *e = SymTable_lookup($1->id_node.id, env);
+        $$ = Node_decons(loc(@1), $1, $3, e->node);
     };
 com_id_list: com_ids { $$ = $1; } | { $$ = NULL; } ;
 com_ids: com_ids ',' COM_ID { $$ = List_push(Node_com_id(loc(@3), $3), $1); }
@@ -432,9 +432,9 @@ void yyerror_(const char *msg, YYLTYPE loc) {
 
 void init_symbol_table() {
     root = SymTable_new(NULL);
-    char *types[4] = { "Int", "Char", "Real", "Any" };
+    char *types[] = { "Int", "Long", "Char", "Real", "Bool", "Any" };
     ASTNode *p = NULL;
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < (sizeof(types)/sizeof(char *)); ++i) {
         p = Node_type_def(no_loc(), Node_type_decl(no_loc(), types[i], NULL));
         SymTable_install(SymTableEntry_new(p), root);
     }

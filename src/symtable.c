@@ -2,19 +2,7 @@
 
 HashKey SymTable_entrykey(HashEntry entry) {
     SymTableEntry *e = (SymTableEntry *)entry;
-    ASTNode *node = e->node;
-    if (node == NULL)
-        return NULL;
-    switch (node->tag & NTMASK) {
-    case NT_DEF:
-        return node->def_node.id;
-    case NT_TYPE_DEF:
-        return node->type_def_node.decl->id->id;
-    case NT_TYPE_ALIAS:
-        return node->type_alias_node.decl->id->id;
-    default:
-        return NULL;
-    }
+    return e->key;
 }
 
 SymbolTable *SymTable_new(SymbolTable *parent) {
@@ -143,6 +131,16 @@ void SymTable_install(SymTableEntry *entry, SymbolTable *t) {
 SymTableEntry *SymTableEntry_new(ASTNode *node) {
     SymTableEntry *entry = malloc(sizeof(SymTableEntry));
     entry->node = node;
+    switch (node->tag & NTMASK) {
+    case NT_DEF:
+        entry->key = strdup(node->def_node.id); break;
+    case NT_TYPE_DEF:
+        entry->key = strdup(node->type_def_node.decl->id->id); break;
+    case NT_TYPE_ALIAS:
+        entry->key = strdup(node->type_alias_node.decl->id->id); break;
+    default:
+        entry->key = NULL;
+    }
     return entry;
 }
 

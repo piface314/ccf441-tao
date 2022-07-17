@@ -9,6 +9,7 @@
 #include "defs.h"
 
 typedef struct {
+    HashKey key;
     ASTNode *node;
 } SymTableEntry;
 

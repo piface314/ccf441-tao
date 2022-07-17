@@ -60,7 +60,7 @@ typedef struct ptr_type_node {
 
 ASTNode *Node_ptr_type(Loc loc, ASTNode *ptr, int size);
 
-typedef struct type_node {
+typedef struct {
     NodeTag tag;
     Loc loc;
     PtrTypeNode *ptr_t;
