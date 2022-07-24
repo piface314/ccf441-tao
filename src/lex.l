@@ -1,37 +1,18 @@
 /* Análise Léxica */
 
 %{
-  #include "defs.h"
-  #include "y.tab.h"
-  #include <stdlib.h>
-  #include <string.h>
-
-  #define YY_USER_ACTION \
-    yylloc.first_line = yylloc.last_line; \
-    yylloc.first_column = yylloc.last_column; \
-    if (!started) started = 1, printf("%3d: ", yylloc.last_line); \
-    for (int i = 0; yytext[i]; i++) { \
-      putchar(yytext[i]); \
-      if (yytext[i] == '\n') \
-        yylloc.last_line++, yylloc.last_column = 1, printf("%3d: ", yylloc.last_line); \
-      else \
-        yylloc.last_column++; \
-    }
-
-  #define STR_BUFFER_SIZE 0x1000 
-
-  int started = 0;
-  int id_token(int tk);
-  int char_int_val(char c);
-  int int_val(int base, int i0);
-  double real_val();
-  char unescape(char c);
-  char *string_val();
-  int tri_hex_val();
-  void lexerror(char *msg);
+  #include <string>
+  #include <sstream>
+  #include <iostream>
+  #include <vector>
+  #include "parser.hpp"
+  #include "lexer.hpp"
   
-  char buffer[STR_BUFFER_SIZE];
-  char *s = NULL;
+  extern "C" int yywrap() {return 1;}
+
+  #define YY_USER_ACTION lexer.update_yyloc();
+
+  Lexer lexer;
 %}
 
 %option yylineno
@@ -51,7 +32,7 @@ hexit         [0-9A-Fa-f]
 symbol_at     [!#$%&*+/<=>?^\|\\\-~:]
 symbol        [!@#$%&*+/<=>?^\|\\\-~:]
 special       [\(\),\[\]\{\}]
-symid         {symbol_at}+|{symbol}*{symbol_at}{symbol}*
+symid         {symbol}*{symbol_at}{symbol}*
 relop         ==|!=|\<|\<=|\>=|\>
 comid         {small}({small}|{large}|{digit})*
 proid         {large}({small}|{large}|{digit})*
@@ -77,55 +58,65 @@ hexagram      [\|:]{6,6}
 wuji                        {return WUJI;}
 yin                         {return YIN;}
 yang                        {return YANG;}
-{trigram}                   {return TRIG0 + tri_hex_val();}
-{hexagram}                  {return HEX00 + tri_hex_val();}
+{trigram}                   {return lexer.trig_token();}
+{hexagram}                  {return lexer.hex_token();}
 [@:=\.\-]                   {return *yytext;}
 {special}                   {return *yytext;}
-{qualify}?\*\*              {return id_token(SYM_ID_R8);}
-{qualify}?[*/&^]            {return id_token(SYM_ID_L7);}
-{qualify}?[+\|]             {return id_token(SYM_ID_L6);}
-{qualify}\-                 {return id_token(SYM_ID_L6);}
-{qualify}?(\<\<|\>\>)       {return id_token(SYM_ID_L5);}
-{qualify}?\<{symbol}*\>     {lexerror("invalid operator");}
-{qualify}?\<\<{symbol}+     {return id_token(SYM_ID_L1);}
-{qualify}?{symbol}+\>\>     {return id_token(SYM_ID_R1);}
-{qualify}?\<{symbol}+       {return id_token(SYM_ID_L5);}
-{qualify}?{symbol}+\>       {return id_token(SYM_ID_R5);}
-{qualify}?{relop}           {return id_token(SYM_ID_N4);}
-{qualify}?&&                {return id_token(SYM_ID_L3);}
-{qualify}?\|\|              {return id_token(SYM_ID_L2);}
-{qualify}?{symid}           {return id_token(SYM_ID_N1);}
-{qualify}?{comid}           {return id_token(COM_ID);}
-{qualify}?{proid}           {return id_token(PRO_ID);}
-{decimal}                   {yylval.int_val = int_val(10, 0); return INTEGER;}
-0[xX]{hexit}+               {yylval.int_val = int_val(16, 2); return INTEGER;}
-{real}                      {yylval.real_val = real_val(); return REAL;}
-'\\{charesc}'               {yylval.char_val = unescape(yytext[2]); return CHAR;}
-'\\x{hexit}{hexit}'         {yylval.char_val = (char)((char_int_val(yytext[3]) << 4) + char_int_val(yytext[4])); return CHAR;}
-'{ws_space}'                {lexerror("invalid char literal");}
-'[^']'                      {yylval.char_val = yytext[1]; return CHAR;}
-\"                          {BEGIN(STRLIT); s = buffer;}
-<STRLIT>\"                  {BEGIN(INITIAL); *s = 0; yylval.string_val = string_val(); return STRING;}
-<STRLIT>\\{charesc}         {*s++ = unescape(yytext[1]);}
-<STRLIT>\\x{hexit}{hexit}   {*s++ = (char)((char_int_val(yytext[2]) << 4) + char_int_val(yytext[3]));}
+{qualify}?\*\*              {return lexer.id_token(SYM_ID_R8);}
+{qualify}?[*/&^]            {return lexer.id_token(SYM_ID_L7);}
+{qualify}?[+\|]             {return lexer.id_token(SYM_ID_L6);}
+{qualify}\-                 {return lexer.id_token(SYM_ID_L6);}
+{qualify}?(\<\<|\>\>)       {return lexer.id_token(SYM_ID_L5);}
+{qualify}?\<{symbol}*\>     {lexer.error("invalid operator");}
+{qualify}?\<\<{symbol}+     {return lexer.id_token(SYM_ID_L1);}
+{qualify}?{symbol}+\>\>     {return lexer.id_token(SYM_ID_R1);}
+{qualify}?\<{symbol}+       {return lexer.id_token(SYM_ID_L5);}
+{qualify}?{symbol}+\>       {return lexer.id_token(SYM_ID_R5);}
+{qualify}?{relop}           {return lexer.id_token(SYM_ID_N4);}
+{qualify}?&&                {return lexer.id_token(SYM_ID_L3);}
+{qualify}?\|\|              {return lexer.id_token(SYM_ID_L2);}
+{qualify}?{symid}           {return lexer.id_token(SYM_ID_N1);}
+{qualify}?{comid}           {return lexer.id_token(COM_ID);}
+{qualify}?{proid}           {return lexer.id_token(PRO_ID);}
+{decimal}                   {return lexer.integer_token(10, 0);}
+0[xX]{hexit}+               {return lexer.integer_token(16, 2);}
+{real}                      {return lexer.real_token();}
+'\\{charesc}'               {return lexer.char_esc_token();}
+'\\x{hexit}{hexit}'         {return lexer.char_hex_token();}
+'{ws_space}'                {lexer.error("invalid char literal");}
+'[^']'                      {return lexer.char_token();}
+\"                          {lexer.str_lit_begin();}
+<STRLIT>\"                  {return lexer.string_token();}
+<STRLIT>\\{charesc}         {lexer.str_lit_push_hex();}
+<STRLIT>\\x{hexit}{hexit}   {lexer.str_lit_push_esc();}
 <STRLIT>{gap}               {/* ignore */}
-<STRLIT>{ws_space}          {lexerror("invalid string literal");}
-<STRLIT>.                   {*s++ = *yytext;}
-<STRLIT><<EOF>>             {lexerror("invalid string literal");}
-.                           {lexerror("unknown symbol");}
+<STRLIT>{ws_space}          {lexer.error("invalid string literal");}
+<STRLIT>.                   {lexer.str_lit_push();}
+<STRLIT><<EOF>>             {lexer.error("invalid string literal");}
+.                           {lexer.error("unknown symbol");}
 %%
 
 /* Código auxiliar */
 
-int id_token(int tk) {
-  yylval.string_val = strdup(yytext);
+void Lexer::update_yyloc() {
+  yylloc.first_line = yylloc.last_line;
+  yylloc.first_column = yylloc.last_column;
+  for (int i = 0; yytext[i]; i++)
+    if (yytext[i] == '\n')
+      yylloc.last_line++, yylloc.last_column = 1;
+    else
+      yylloc.last_column++;
+}
+
+int Lexer::id_token(int tk) {
+  yylval.string_val = std::string(yytext, yyleng);
   for (int i = 0; yytext[i]; ++i)
     if (yytext[i] == '.')
       return tk+1;
   return tk;
 }
 
-int char_int_val(char c) {
+int Lexer::char_int_val(char c) {
   if ('0' <= c && c <= '9')
     return c - '0';
   else if ('a' <= c && c <= 'z')
@@ -136,14 +127,14 @@ int char_int_val(char c) {
     return 0;
 }
 
-int int_val(int base, int i0) {
+int Lexer::int_val(int base, int i0) {
   int v = 0;
   for (int i = i0; i < yyleng; ++i)
     v = v * base + char_int_val(yytext[i]);
   return v;
 }
 
-double real_val() {
+double Lexer::real_val() {
   double v = 0;
   int i = 0;
   for (; '0' <= yytext[i] && yytext[i] <= '9'; ++i)
@@ -174,7 +165,7 @@ double real_val() {
   return v;
 }
 
-char unescape(char c) {
+char Lexer::unescape(char c) {
   switch (c) {
     case 'a': return '\a';
     case 'b': return '\b';
@@ -191,24 +182,80 @@ char unescape(char c) {
   }
 }
 
-char *string_val() {
-  return strdup(buffer);
-}
-
-int tri_hex_val() {
-  int val = 0;
+int Lexer::tri_hex_offset() {
+  int offset = 0;
   for (int i = 0; yytext[i]; ++i)
-    val = (val << 1) + (yytext[i]=='|');
-  return val;
+    offset = (offset << 1) + (yytext[i]=='|');
+  return offset;
 }
 
-void lexerror(char *msg) {
+int Lexer::trig_token() {
+  return TRIG0 + tri_hex_offset();
+}
+int Lexer::hex_token() {
+  return HEX00 + tri_hex_offset();
+}
+
+int Lexer::integer_token(int base, int i0) {
+  yylval.int_val = int_val(base, i0);
+  return INTEGER;
+}
+
+int Lexer::real_token() {
+  yylval.real_val = real_val();
+  return REAL;
+}
+
+int Lexer::char_token() {
+  yylval.char_val = yytext[1];
+  return CHAR;
+}
+
+int Lexer::char_esc_token() {
+  yylval.char_val = unescape(yytext[2]);
+  return CHAR;
+}
+
+int Lexer::char_hex_token() {
+  yylval.char_val = (char)(
+    (char_int_val(yytext[3]) << 4)
+    + char_int_val(yytext[4])
+  );
+  return CHAR;
+}
+
+void Lexer::str_lit_begin() {
+  BEGIN(STRLIT);
+  buffer = std::stringstream();
+}
+
+int Lexer::string_token() {
+  BEGIN(INITIAL);
+  yylval.string_val = buffer.str();
+  return STRING;
+}
+
+void Lexer::str_lit_push() {
+  buffer << *yytext;
+}
+
+void Lexer::str_lit_push_esc() {
+  buffer << unescape(yytext[1]);
+}
+
+void Lexer::str_lit_push_hex() {
+  buffer << (char)((char_int_val(yytext[2]) << 4) + char_int_val(yytext[3]));
+}
+
+void Lexer::error(char *msg) {
   int line = yylloc.first_line;
   int col = yylloc.first_column;
-  fprintf(stderr, "%d:%d: lexical unbalance: %s\n", line, col, msg);
+  std::cerr << line << ':' << col << ": lexical unbalance: " << msg << std::endl;
   exit(1);
 }
 
-int yywrap(void) {
-  return 1;
-}
+  /* 
+  int yywrap(void) {
+    return 1;
+  } */
+

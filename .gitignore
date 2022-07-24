@@ -56,3 +56,7 @@ dkms.conf
 y.tab.*
 *.zip
 bin/*
+!bin/.gitkeep
+src/parser.cpp
+src/parser.hpp
+src/lexer.cpp
