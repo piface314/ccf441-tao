@@ -18,7 +18,7 @@ obj/%.o: src/%.cpp # src/%.hpp src/defs.h
 src/parser.hpp: src/parser.cpp
 
 src/parser.cpp: src/parse.y
-	yacc $(YACCFLAGS) src/parse.y --defines=src/parser.hpp -o src/parser.cpp
+	bison $(YACCFLAGS) src/parse.y --defines=src/parser.hpp -o src/parser.cpp
 
 src/lexer.cpp: src/lex.l src/parser.hpp
 	flex -o src/lexer.cpp src/lex.l

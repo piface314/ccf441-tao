@@ -1,9 +1,11 @@
 %{
-    #include <stdio.h>
-    #include <stdlib.h>
+    #include <cstdio>
+    #include <cstdlib>
+
     #include "defs.h"
     #include "symtable.h"
-    #include "y.tab.h"
+    #include "parser.hpp"
+
     void yyerror(const char *fmt);
     void yyerror_(const char *msg, YYLTYPE loc);
     int yylex();
