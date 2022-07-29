@@ -1,22 +1,29 @@
-%{
-    #include <cstdio>
-    #include <cstdlib>
 
-    #include "defs.h"
-    #include "symtable.h"
+%code requires {
+    #include <iostream>
+    #include <sstream>
+    #include "ast.hpp"
+}
+
+%{
+    #include "symtable.hpp"
     #include "parser.hpp"
+    #define VPUSH(D,V,I) D = V; if(I)V->push_back(I)
+    #define VINIT(D,I)   D = new std::vector<ASTNode*>(); if(I)D->push_back(I)
+    #define VEMPTY       new std::vector<ASTNode*>()
+    #define ENVPUSH env = new SymTable(env)
+    #define ENVPOP  SymTable *t = env; env = env->prev; delete t
 
     void yyerror(const char *fmt);
     void yyerror_(const char *msg, YYLTYPE loc);
     int yylex();
-    Loc loc(YYLTYPE l);
-    Loc no_loc();
-    void install_params(List *params);
 
-    int with_type_params = 0;
-    SymbolTable *root = NULL;
-    SymbolTable *env = NULL;
-    List *errors = NULL;
+    SymTable *env = NULL;
+    ASTNode *ast = NULL;
+
+    bool with_type_params = false;
+    std::vector<std::string> errors;
+    std::vector<ASTNode*> empty;
 %}
 
 /* Definições */
@@ -26,9 +33,10 @@
     int int_val;
     double real_val;
     char char_val;
-    char *string_val;
+    std::string *string_val;
     ASTNode *node;
-    List *list;
+    CallableNode *cnode;
+    std::vector<ASTNode *> *list;
 };
 
 %token TRIG0 TRIG1 TRIG2 TRIG3 TRIG4 TRIG5 TRIG6 TRIG7
@@ -71,102 +79,110 @@
 %nonassoc PREFIX
 %right SYM_ID_R8 QSYM_ID_R8
 
-%type <string_val> pro_id_ com_id_ sym_id_
-%type <node> pro_id com_id export_id type_id type_ptr
-%type <node> param expr stmt top_stmt var_def callable_def func_def op_def proc_def
+%type <string_val> pro_id com_id sym_id_
+%type <node> module_decl export type_id
+%type <node> param expr stmt top_stmt var_def import
 %type <node> type_def type_alias constr decons
+%type <node> while repeat step free break continue return
+%type <node> assign addr if else literal match case default
+%type <node> malloc malloc_n build call
+%type <cnode> callable_def func_def op_def proc_def
 %type <list> exports type_arg_list type_args type_param_list type_params param_list params
-%type <list> constrs com_id_list com_ids
-
-%destructor { List_free($$); } <list>
+%type <list> constrs com_id_list com_ids call_type_params top_stmts stmts elif cases
+%type <list> expr_list exprs type_ptr
 
 %%
 /* Regras / Produções */
 
 // Regra inicial
-program: module_decl { env = SymTable_new(env); } top_stmts ;
+program: module_decl { ENVPUSH; } top_stmts { ast = new ProgramNode($1,*$3); delete $3; } ;
 
 // Declaração de módulo
-module_decl: TRIG7 pro_id HEX56 exports ENDL
+module_decl: TRIG7 pro_id HEX56 exports ENDL { $$ = new ExportNode(*$2,*$4); delete $2; delete $4; }
            | TRIG7 error HEX56 exports ENDL { yyerror_("expected a proper identifier", @2); }
            | TRIG7 pro_id error exports ENDL { yyerror_("expected |||:::", @3); }
-           |
+           | { $$ = NULL; }
            ;
 
-exports: exports ',' export_id { $$ = List_push($3, $1); }
-       | export_id             { $$ = List_push($1, NULL); }
+exports: exports ',' export { VPUSH($$,$1,$3); }
+       | export             { VINIT($$,$1); }
        ;
 
-export_id: COM_ID  { $$ = Node_com_id(loc(@1), $1); }
-         | PRO_ID  { $$ = Node_pro_id(loc(@1), $1); }
-         | sym_id_ { $$ = Node_sym_id(loc(@1), $1); }
-         | error   { $$ = Node_com_id(loc(@1), ""); yyerror_("expected a nonqualified identifier", @1); }
-         ;
+export: COM_ID  { $$ = new IDNode(*$1); delete $1; }
+      | PRO_ID  { $$ = new IDNode(*$1); delete $1; }
+      | sym_id_ { $$ = new IDNode(*$1); delete $1; }
+      | error   { $$ = NULL; yyerror_("expected a nonqualified identifier", @1); }
+      ;
 
 // Comandos que podem aparecer no escopo do topo
-top_stmts: top_stmts ENDL top_stmt
-         | top_stmt
+top_stmts: top_stmts ENDL top_stmt { VPUSH($$,$1,$3); }
+         | top_stmt                { VINIT($$,$1); }
          ;
 
-top_stmt: import                        { $$ = NULL; }
+top_stmt: import                        { $$ = $1; }
         | type_def                      { $$ = $1; }
         | type_alias                    { $$ = $1; }
         | callable_def                  { $$ = $1; }
-        | call_type_params callable_def { $$ = NULL; }
+        | call_type_params callable_def { $2->set_type_params(*$1); delete $1; $$ = $2; }
         | var_def                       { $$ = $1; }
         |                               { $$ = NULL; }
         ;
 
 // Importação de outros módulos
-import: TRIG6 pro_id 
-      | TRIG6 pro_id HEX51 exports
-      | TRIG6 pro_id HEX54 PRO_ID 
+import: TRIG6 pro_id                { $$ = new ImportNode(*$2, empty, ""); delete $2; }
+      | TRIG6 pro_id HEX51 exports  { $$ = new ImportNode(*$2, *$4, ""); delete $2; delete $4; }
+      | TRIG6 pro_id HEX54 PRO_ID   { $$ = new ImportNode(*$2, empty, *$4); delete $2; delete $4; }
       ;
 
 
 // Definição de novos tipos
-type_def: TRIG0 PRO_ID type_param_list '=' <node>{
-        ASTNode *decl = Node_type_decl(loc(@2), $2, $3);
-        $$ = Node_type_def(loc(@1), decl);
-        SymTable_install(SymTableEntry_new($$), env);
+type_def: TRIG0 PRO_ID { ENVPUSH; } type_param_list '=' <node>{
+        $$ = new TypeDefNode(*$2, *$4); delete $4;
+        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
     }[def] constrs[cs] {
-        for (List *c = $cs; c; c = c->tail) {
-            ASTNode *t = (ASTNode *)$def->type_def_node.decl;
-            ASTNode *p = Node_adj_constr(t, (ASTNode *)c->item);
-            SymTable_install(SymTableEntry_new(p), env);
-        }
-        $$ = Node_adj_type_def($cs, $def);
+        ENVPOP;
+        dynamic_cast<TypeDefNode*>($def)->add_constrs(*$cs);
+        delete $cs;
+        $$ = $def;
     };
 
-constrs: constrs ',' constr { $$ = List_push($3, $1); }
-       | constr             { $$ = List_push($1, NULL); }
+constrs: constrs ',' constr { VPUSH($$,$1,$3); }
+       | constr             { VINIT($$,$1); }
        ;
-constr: PRO_ID '(' param_list ')' { $$ = Node_constructor(loc(@1), $1, $3); }
-      | PRO_ID                    { $$ = Node_constructor(loc(@1), $1, NULL); }
+constr: PRO_ID '(' param_list ')' {
+            $$ = new ConstrNode(*$1, *$3); delete $3;
+            env->prev->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+        }
+      | PRO_ID {
+            $$ = new ConstrNode(*$1, empty);
+            env->prev->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+        }
       ;
 
 // Declaração de tipos, dá um novo nome a um tipo já existente
-type_alias: HEX00 PRO_ID type_param_list '=' type_id {
-        ASTNode *decl = Node_type_decl(loc(@2), $2, $3);
-        $$ = Node_type_alias(loc(@1), decl, $5);
-        SymTable_install(SymTableEntry_new($$), env);
+type_alias: HEX00 PRO_ID { ENVPUSH; } type_param_list '=' type_id {
+        ENVPOP;
+        $$ = new TypeAliasNode(*$2, *$4, $6); delete $4;
+        env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
     };
 
-type_param_list: '(' type_params ')' { $$ = $2; } | { $$ = NULL; } ;
-type_params: type_params ',' PRO_ID { $$ = List_push(Node_type_decl(loc(@3), $3, NULL), $1); }
-           | PRO_ID                 { $$ = List_push(Node_type_decl(loc(@1), $1, NULL), NULL); }
+type_param_list: '(' type_params ')' { $$ = $2; } | { $$ = VEMPTY; } ;
+type_params: type_params ',' PRO_ID {
+                auto node = new TypeParamNode(*$3);
+                env->install(*$3, new SymTableEntry(Loc(@3), node)); delete $3;
+                VPUSH($$,$1,node);
+            }
+           | PRO_ID                 {
+                auto node = new TypeParamNode(*$1);
+                env->install(*$1, new SymTableEntry(Loc(@1), node)); delete $1;
+                VINIT($$,node);
+            }
            ;
 
 // Parâmetros de tipo temporários para funções e procedimentos
-call_type_params: HEX03 type_params {
-        with_type_params = 1;
-        env = SymTable_new(env);
-        for (List *c = $2; c; c = c->tail) {
-            IdNode *id = ((TypeNode *)c->item)->id;
-            ASTNode *p = Node_call_type_alias(id->loc, id->id);
-            SymTable_install(SymTableEntry_new(p), env);
-            free(id);
-        }
+call_type_params: HEX03 { ENVPUSH; } type_params {
+        with_type_params = true;
+        $$ = $3;
     };
 
 // Definição de funções e procedimentos
@@ -176,223 +192,219 @@ callable_def: func_def { $$ = $1; }
             ;
 
 // Definição de função
-func_def: YANG COM_ID '(' param_list ')' ':' type_id '=' <node>{
-        ASTNode *t = Node_fun_type(loc(@4), NULL, List_push($7, $4));
-        $$ = Node_yang(loc(@1), $2, t, NULL);
-        if (with_type_params) {
-            SymTable_install(SymTableEntry_new($$), env->parent);
-        } else {
-            SymTable_install(SymTableEntry_new($$), env);
-            env = SymTable_new(env);
-        }
-        with_type_params = 0;
-        install_params($4);
-    }[def] expr[body] {
-        env = env->parent;
-        $def->def_node.body = $body;
-        $$ = $def;
-    } ;
+func_def: YANG COM_ID {
+            if (!with_type_params) ENVPUSH;
+        } '(' param_list ')' ':' type_id '=' <cnode>{
+        with_type_params = false;
+        $$ = new YangNode(*$2, *$5, $8); delete $5;
+        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+    }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
 // Definição de operador (função com identificador de símbolo)
-op_def: YANG sym_id_ '(' param ',' param ')' ':' type_id '=' <node>{
-        List *params = List_push($6, List_push($4, NULL));
-        List *p_ret = List_push($9, params);
-        ASTNode *t = Node_fun_type(loc(@4), NULL, p_ret);
-        $$ = Node_yang(loc(@1), $2, t, NULL);
-        if (with_type_params) {
-            SymTable_install(SymTableEntry_new($$), env->parent);
-        } else {
-            SymTable_install(SymTableEntry_new($$), env);
-            env = SymTable_new(env);
-        }
-        with_type_params = 0;
-        install_params(params);
-        List_free(p_ret);
-    }[def] expr[body] {
-        env = env->parent;
-        $def->def_node.body = $body;
-        $$ = $def;
-    } ;
+op_def: YANG sym_id_ {
+            if (!with_type_params) ENVPUSH;
+        } '(' param ',' param ')' ':' type_id '=' <cnode>{
+        with_type_params = false;
+        std::vector<ASTNode*> params;
+        params.push_back($5);
+        params.push_back($7);
+        $$ = new YangNode(*$2, params, $10);
+        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+    }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
 // Definição de procedimento
-proc_def: WUJI COM_ID '(' param_list ')' <node>{
-        ASTNode *t = Node_proc_type(loc(@4), NULL, $4);
-        $$ = Node_wuji(loc(@1), $2, t, NULL);
-        if (with_type_params) {
-            SymTable_install(SymTableEntry_new($$), env->parent);
-        } else {
-            SymTable_install(SymTableEntry_new($$), env);
-            env = SymTable_new(env);
-        }
-        with_type_params = 0;
-        install_params($4);
-    }[def] stmt[body] {
-        env = env->parent;
-        $def->def_node.body = $body;
-        $$ = $def;
-    } ;
+proc_def: WUJI COM_ID {
+            if (!with_type_params) ENVPUSH;
+        } '(' param_list ')' <cnode>{
+        with_type_params = false;
+        $$ = new WujiNode(*$2, *$5); delete $5;
+        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+    }[def] stmt[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
-param_list: params { $$ = $1; } | { $$ = NULL; } ;
-params: params ',' param { $$ = List_push($3, $1); }
-      | param            { $$ = List_push($1, NULL); }
+param_list: params { $$ = $1; }| { $$ = VEMPTY; } ;
+params: params ',' param { VPUSH($$,$1,$3); }
+      | param            { VINIT($$,$1); }
       ;
-param: COM_ID ':' type_id { $$ = Node_yin(loc(@1), $1, $3, NULL); } ;
+param: COM_ID ':' type_id {
+        $$ = new ParamNode(*$1, $3);
+        env->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+    } ;
 
 // Definição de variável
 var_def: YIN COM_ID ':' type_id {
-            $$ = Node_yin(loc(@1), $2, $4, NULL);
-            SymTable_install(SymTableEntry_new($$), env);
+            $$ = new YinNode(*$2, $4, NULL);
+            env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
         }
        | YIN COM_ID ':' type_id '=' expr  {
-            $$ = Node_yin(loc(@1), $2, $4, $6);
-            SymTable_install(SymTableEntry_new($$), env);
+            $$ = new YinNode(*$2, $4, $6);
+            env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
         }
        ;
 
 // Comandos gerais
-stmts: stmts ENDL stmt
-     | stmt
+stmts: stmts ENDL stmt { VPUSH($$,$1,$3); }
+     | stmt            { VINIT($$,$1); }
      ;
 
-stmt: top_stmt { $$ = NULL; }
-    | while    { $$ = NULL; }
-    | repeat   { $$ = NULL; }
-    | free     { $$ = NULL; }
-    | break    { $$ = NULL; }
-    | continue { $$ = NULL; }
-    | return   { $$ = NULL; }
-    | expr     { $$ = NULL; }
+stmt: top_stmt { $$ = $1; }
+    | while    { $$ = $1; }
+    | repeat   { $$ = $1; }
+    | free     { $$ = $1; }
+    | break    { $$ = $1; }
+    | continue { $$ = $1; }
+    | return   { $$ = $1; }
+    | expr     { $$ = $1; }
     ;
 
 // Comandos de repetição
-while: TRIG3 expr step HEX31 stmt;
-repeat: HEX27 stmt HEX25 expr step;
-step: HEX28 stmt | ;
+while: TRIG3 expr step HEX31 stmt { $$ = new WhileNode($2, $3, $5); };
+repeat: HEX27 stmt HEX25 expr step { $$ = new RepeatNode($2, $4, $5); };
+step: HEX28 stmt { $$ = $2; } | { $$ = NULL; } ;
 
 // Controle de fluxo
-break: HEX30;
-continue: HEX26;
-return: HEX62
-      | HEX62 expr;
+break: HEX30 { $$ = new BreakNode(); } ;
+continue: HEX26 { $$ = new ContinueNode(); } ;
+return: HEX62      { $$ = new ReturnNode(NULL); }
+      | HEX62 expr { $$ = new ReturnNode($2); }
+      ;
 
 // Liberação de memória
-free: TRIG4 addr;
+free: TRIG4 addr { $$ = new FreeNode($2); } ;
 
 // Expressões
-expr: '{' { env = SymTable_new(env); } stmts '}' {
-            env = env->parent;
-            $$ = NULL;
-        }
-    | assign                        { $$ = NULL; }
-    | match                         { $$ = NULL; }
-    | if                            { $$ = NULL; }
-    | expr SYM_ID_L1 expr           { $$ = NULL; }
-    | expr QSYM_ID_L1 expr          { $$ = NULL; }
-    | expr SYM_ID_N1 expr           { $$ = NULL; }
-    | expr QSYM_ID_N1 expr          { $$ = NULL; }
-    | expr SYM_ID_R1 expr           { $$ = NULL; }
-    | expr QSYM_ID_R1 expr          { $$ = NULL; }
-    | expr SYM_ID_L2 expr           { $$ = NULL; }
-    | expr QSYM_ID_L2 expr          { $$ = NULL; }
-    | expr SYM_ID_L3 expr           { $$ = NULL; }
-    | expr QSYM_ID_L3 expr          { $$ = NULL; }
-    | expr SYM_ID_N4 expr           { $$ = NULL; }
-    | expr QSYM_ID_N4 expr          { $$ = NULL; }
-    | expr SYM_ID_R5 expr           { $$ = NULL; }
-    | expr QSYM_ID_R5 expr          { $$ = NULL; }
-    | expr SYM_ID_L5 expr           { $$ = NULL; }
-    | expr QSYM_ID_L5 expr          { $$ = NULL; }
-    | expr SYM_ID_L6 expr           { $$ = NULL; }
-    | expr QSYM_ID_L6 expr          { $$ = NULL; }
-    | expr '-' expr %prec SYM_ID_L6 { $$ = NULL; }
-    | expr SYM_ID_L7 expr           { $$ = NULL; }
-    | expr QSYM_ID_L7 expr          { $$ = NULL; }
-    | expr SYM_ID_R8 expr           { $$ = NULL; }
-    | expr QSYM_ID_R8 expr          { $$ = NULL; }
-    | '@' expr %prec PREFIX         { $$ = NULL; }
-    | '~' expr %prec PREFIX         { $$ = NULL; }
-    | '!' expr %prec PREFIX         { $$ = NULL; }
-    | '-' expr %prec PREFIX         { $$ = NULL; }
-    | malloc                        { $$ = NULL; }
-    | build                         { $$ = NULL; }
-    | call                          { $$ = NULL; }
-    | addr                          { $$ = NULL; }
-    | literal                       { $$ = NULL; }
+expr: '{' { ENVPUSH; } stmts '}' { ENVPOP; $$ = new BlockNode(*$3); delete $3; }
+    | assign                        { $$ = $1; }
+    | match                         { $$ = $1; }
+    | if                            { $$ = $1; }
+    | expr SYM_ID_L1 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L1 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_N1 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_N1 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_R1 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_R1 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_L2 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L2 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_L3 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L3 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_N4 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_N4 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_R5 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_R5 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_L5 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L5 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_L6 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L6 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr '-' expr %prec SYM_ID_L6 { $$ = new BinaryOpNode("-", $1, $3); }
+    | expr SYM_ID_L7 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_L7 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr SYM_ID_R8 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | expr QSYM_ID_R8 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
+    | '@' expr %prec PREFIX         { $$ = new UnaryOpNode("@", $2); }
+    | '~' expr %prec PREFIX         { $$ = new UnaryOpNode("~", $2); }
+    | '!' expr %prec PREFIX         { $$ = new UnaryOpNode("!", $2); }
+    | '-' expr %prec PREFIX         { $$ = new UnaryOpNode("-", $2); }
+    | malloc                        { $$ = $1; }
+    | build                         { $$ = $1; }
+    | call                          { $$ = $1; }
+    | addr                          { $$ = $1; }
+    | literal                       { $$ = $1; }
     | '(' expr ')'                  { $$ = $2; }
     ;
 
 // Expressão de atribuição
-assign: addr '=' expr;
-addr: addr '[' expr ']'
-    | addr '.' COM_ID
-    | addr '@'
-    | com_id
+assign: addr '=' expr   { $$ = new AssignNode($1, $3); };
+addr: addr '[' expr ']' { $$ = new AddressNode($1, $3); }
+    | addr '@'          { $$ = new AddressNode($1); }
+    | addr '.' COM_ID   { $$ = new AccessNode($1, *$3); delete $3; }
+    | com_id            { $$ = new IDNode(*$1); delete $1; }
     ;
 
 // Expressão condicional
-if: TRIG2 expr HEX20 stmt elif else
-elif: elif HEX18 expr HEX20 stmt | ;
-else: HEX19 stmt | ;
+if: TRIG2 expr HEX20 stmt elif else {
+        $5->insert($5->begin(), new IfNode($2,$4));
+        $5->push_back($6);
+        for (auto it = $5->begin(); it != $5->end() - 1; ++it)
+            dynamic_cast<IfNode*>(*it)->set_else(*(it + 1));
+        $$ = *$5->begin();
+        delete $5;
+    }
+elif: elif HEX18 expr HEX20 stmt { VPUSH($$,$1,new IfNode($3,$5)); }
+    | { $$ = VEMPTY; } ;
+else: HEX19 stmt { $$ = $2; } | { $$ = NULL; } ;
 
 // Expressão de casamento de tipo
-match: TRIG5 expr cases default;
-cases: cases case | case ;
-case: HEX47 literal HEX42 stmt
-    | HEX47 decons {
-        env = SymTable_new(env);
-        DeconsNode *p = (DeconsNode *)$2;
-        for (int i = 0; i < p->argc; ++i)
-            SymTable_install(SymTableEntry_new((ASTNode *)p->args[i]), env);
-    } HEX42 stmt { env = env->parent; }
+match: TRIG5 expr cases default { $$ = new MatchNode($2, *$3, $4); delete $3; };
+cases: cases case  { VPUSH($$,$1,$2); }
+     | case        { VINIT($$,$1); } ;
+case: HEX47 literal HEX42 stmt { $$ = new CaseNode(true, $2, $4); }
+    | HEX47 decons { ENVPUSH; } HEX42 stmt { ENVPOP; $$ = new CaseNode(false, $2, $5); }
     ;
-default: HEX44 stmt | ;
+default: HEX44 stmt { $$ = $2; } | { $$ = NULL; } ;
 decons: pro_id '(' com_id_list ')' {
-        SymTableEntry *e = SymTable_lookup($1->id_node.id, env);
-        $$ = Node_decons(loc(@1), $1, $3, e->node);
+        $$ = new DeconsNode(*$1, *$3); delete $3;
+        SymTableEntry *e = env->lookup(*$1);
+        delete $1;
+        if (e == NULL) { /* erro semãntico */ }
     };
-com_id_list: com_ids { $$ = $1; } | { $$ = NULL; } ;
-com_ids: com_ids ',' COM_ID { $$ = List_push(Node_com_id(loc(@3), $3), $1); }
-       | COM_ID             { $$ = List_push(Node_com_id(loc(@1), $1), NULL); }
+com_id_list: com_ids { $$ = $1; } | { $$ = VEMPTY; } ;
+com_ids: com_ids ',' COM_ID { VPUSH($$,$1,new IDNode(*$3)); delete $3; }
+       | COM_ID             { VINIT($$,new IDNode(*$1)); delete $1; }
        ;
 
 // Expressão de alocação de memória
-malloc: TRIG1 type_id malloc_n
-      | HEX13 expr malloc_n
+malloc: TRIG1 type_id malloc_n { $$ = new MallocNode($2, NULL, $3); }
+      | HEX13 expr malloc_n    { $$ = new MallocNode(NULL, $2, $3); }
       ;
-malloc_n: HEX11 expr | ;
+malloc_n: HEX11 expr { $$ = $2; } | { $$ = NULL; } ;
 
 // Chamada de construtor de tipo
-build: pro_id | pro_id '(' expr_list ')';
+build: pro_id                   { $$ = new CallNode(*$1, empty); delete $1; }
+     | pro_id '(' expr_list ')' { $$ = new CallNode(*$1, *$3); delete $1; delete $3; }
+     ;
 
 // Chamada de função ou procedimento
-call: com_id '(' expr_list ')';
+call: com_id '(' expr_list ')' { $$ = new CallNode(*$1, *$3); delete $1; delete $3; } ;
 
-expr_list: exprs | ;
-exprs: exprs ',' expr | expr ;
+expr_list: exprs { $$ = $1; } | { $$ = VEMPTY; } ;
+exprs: exprs ',' expr { VPUSH($$,$1,$3); }
+     | expr           { VINIT($$,$1); }
+     ;
 
 // Identificador de tipo
-type_id:
-    type_ptr pro_id type_arg_list          { $$ = Node_var_type(loc(@2), $1, $2, $3);  }
-    | type_ptr type_arg_list HEX57 type_id { $$ = Node_fun_type(loc(@2), $1, List_push($4, $2)); }
-    | type_ptr type_arg_list HEX59         { $$ = Node_proc_type(loc(@2), $1, $2); }
-    ;
+type_id: type_ptr pro_id type_arg_list {
+            $1->push_back(new VarTypeNode(*$2, *$3)); delete $2; delete $3;
+            for (auto it = $1->begin(); it != $1->end()-1; ++it)
+                dynamic_cast<PtrTypeNode*>(*it)->set_type(*(it+1));
+            $$ = *$1->begin(); delete $1;
+        }
+       | type_ptr type_arg_list HEX57 type_id {
+            $1->push_back(new FunTypeNode(*$2, $4)); delete $2;
+            for (auto it = $1->begin(); it != $1->end()-1; ++it)
+                dynamic_cast<PtrTypeNode*>(*it)->set_type(*(it+1));
+            $$ = *$1->begin(); delete $1;
+        }
+       | type_ptr type_arg_list HEX59 {
+            $1->push_back(new ProcTypeNode(*$2)); delete $2;
+            for (auto it = $1->begin(); it != $1->end()-1; ++it)
+                dynamic_cast<PtrTypeNode*>(*it)->set_type(*(it+1));
+            $$ = *$1->begin(); delete $1;
+        }
+       ;
 
-type_ptr: type_ptr '@'             { $$ = Node_ptr_type(loc(@2), $1, 0); }
-        | type_ptr '[' INTEGER ']' { $$ = Node_ptr_type(loc(@2), $1, $3); }
-        |                          { $$ = NULL; }
+type_ptr: type_ptr '@'             { VPUSH($$,$1,new PtrTypeNode(0)); }
+        | type_ptr '[' INTEGER ']' { VPUSH($$,$1,new PtrTypeNode($3)); }
+        |                          { $$ = VEMPTY; }
         ;
 
-type_arg_list: '(' type_args ')' { $$ = $2; } | { $$ = NULL; } ;
-type_args: type_args ',' type_id { $$ = List_push($3, $1); }
-         | type_id               { $$ = List_push($1, NULL); }
+type_arg_list: '(' type_args ')' { $$ = $2; } | { $$ = VEMPTY; } ;
+type_args: type_args ',' type_id { VPUSH($$,$1,$3); }
+         | type_id               { VINIT($$,$1); }
          ;
 
 
 // Auxiliares para lidar com identificadores
-pro_id: pro_id_ { $$ = Node_pro_id(loc(@1), $1); } ;
-pro_id_: PRO_ID { $$ = $1;} | QPRO_ID { $$ = $1;} ;
-com_id: com_id_  { $$ = Node_com_id(loc(@1), $1); } ;
-com_id_: COM_ID { $$ = $1;} | QCOM_ID { $$ = $1;} ;
+pro_id: PRO_ID { $$ = $1;} | QPRO_ID { $$ = $1;} ;
+com_id: COM_ID { $$ = $1;} | QCOM_ID { $$ = $1;} ;
 sym_id_: SYM_ID_R8 { $$ = $1; }
        | SYM_ID_L7 { $$ = $1; }
        | SYM_ID_L6 { $$ = $1; }
@@ -404,87 +416,28 @@ sym_id_: SYM_ID_R8 { $$ = $1; }
        | SYM_ID_L1 { $$ = $1; }
        | SYM_ID_R1 { $$ = $1; }
        | SYM_ID_N1 { $$ = $1; }
-       | '-'       { $$ = "-"; }
+       | '-'       { $$ = new std::string("-"); }
        ;
 
 // Auxiliar para uma literal qualquer
-literal: INTEGER
-       | REAL
-       | CHAR
-       | STRING
+literal: INTEGER { $$ = new LiteralNode($1); }
+       | REAL    { $$ = new LiteralNode($1); }
+       | CHAR    { $$ = new LiteralNode($1); }
+       | STRING  { $$ = new LiteralNode(*$1); }
        ;
 %%
 
 /* Código auxiliar */
 
 void yyerror(const char *msg) {
-    char *buffer = malloc(sizeof(char) * 128);
-    sprintf(buffer, "%d:%d: syntax unbalance: %s", yylloc.first_line, yylloc.first_column, msg);
-    errors = List_push(NULL, errors);
-    errors = List_push(buffer, errors);
+    std::stringstream buffer;
+    buffer << yylloc.first_line << ":" << yylloc.first_column << ": syntax unbalance: " << msg;
+    errors.push_back(buffer.str());
 }
 
 void yyerror_(const char *msg, YYLTYPE loc) {
-    char *buffer = malloc(sizeof(char) * 128);
-    sprintf(buffer, "%d:%d: syntax unbalance: %s", loc.first_line, loc.first_column, msg);
-    errors = List_push(buffer, errors);
-}
-
-void init_symbol_table() {
-    root = SymTable_new(NULL);
-    char *types[] = { "Int", "Long", "Char", "Real", "Bool", "Any" };
-    ASTNode *p = NULL;
-    for (int i = 0; i < (sizeof(types)/sizeof(char *)); ++i) {
-        p = Node_type_def(no_loc(), Node_type_decl(no_loc(), types[i], NULL));
-        SymTable_install(SymTableEntry_new(p), root);
-    }
-    p = Node_constructor(no_loc(), "Null", NULL);
-    ASTNode *t = Node_type_decl(no_loc(), "Any", NULL);
-    t->type_node.ptr_t = (PtrTypeNode *)Node_ptr_type(no_loc(), NULL, 0);
-    p = Node_adj_constr(t, p);
-    SymTable_install(SymTableEntry_new(p), root);
-    
-    // TODO:
-    // adicionar os operadores predefinidos
-    // >>> vai ser omitido por hora, deixa pra análise semântica
-}
-
-Loc loc(YYLTYPE l) {
-    Loc l_ = { .line = l.first_line, .col = l.first_column };
-    return l_;
-}
-
-Loc no_loc() { Loc l = {.line=0, .col=0}; return l;}
-
-void install_params(List *params) {
-    for (List *c = params; c; c = c->tail) {
-        ASTNode *p = (ASTNode *)c->item;
-        SymTable_install(SymTableEntry_new(p), env);
-    }   
-}
-
-int main() {
-    init_symbol_table();
-    env = root;
-    yyparse();
-    printf("\n\nTabela de Símbolos:\n");
-    SymTable_show(root);
-    int e = (int)List_size(errors);
-    if (e == 0) {
-        printf("\nSyntax is balanced.\n");
-        return 0;
-    }
-    char *msgs[e]; int i = 1;
-    for (List *c = errors; c; c = c->tail, ++i)
-        msgs[e-i] = (char *)c->item;
-    fprintf(stderr, "\n");
-    for (i = 0; i < e; ++i) {
-        if (msgs[i] == NULL)
-            continue;
-        if (i > 0 && msgs[i-1] == NULL && i+1 < e && msgs[i+1] != NULL)
-            continue;
-        fprintf(stderr, "%s\n", msgs[i]);
-    }
-    return 1;
+    std::stringstream buffer;
+    buffer << loc.first_line << ":" << loc.first_column << ": syntax unbalance: " << msg;
+    errors.push_back(buffer.str());
 }
 

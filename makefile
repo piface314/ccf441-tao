@@ -1,5 +1,5 @@
 TARGET := taoc
-SRC := main ast symtable lexer parser
+SRC := lexer parser ast symtable main
 OBJS := $(addprefix obj/,$(addsuffix .o,$(SRC)))
 YACCFLAGS := -Wother -Wconflicts-sr -Wconflicts-rr -v
 LLVMCONFIG := llvm-config-12
@@ -12,7 +12,7 @@ all: bin/$(TARGET)
 bin/$(TARGET): $(OBJS)
 	g++ -o bin/$(TARGET) $(OBJS) $(LIBS) $(LDFLAGS)
 
-obj/%.o: src/%.cpp # src/%.hpp src/defs.h
+obj/%.o: src/%.cpp
 	g++ -c $(CCFLAGS) src/$*.cpp -o obj/$*.o
 
 src/parser.hpp: src/parser.cpp
@@ -24,4 +24,4 @@ src/lexer.cpp: src/lex.l src/parser.hpp
 	flex -o src/lexer.cpp src/lex.l
 
 clean:
-	rm obj/* bin/* src/parser.cpp src/parser.hpp src/lexer.cpp
+	rm -vf obj/* bin/* src/parser.cpp src/parser.hpp src/lexer.cpp

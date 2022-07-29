@@ -8,7 +8,7 @@ private:
 public:
     std::stringstream buffer;
 
-    Lexer();
+    Lexer() {};
     void update_yyloc();
     int id_token(int token);
     int char_int_val(char c);

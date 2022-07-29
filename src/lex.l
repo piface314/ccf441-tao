@@ -109,7 +109,7 @@ void Lexer::update_yyloc() {
 }
 
 int Lexer::id_token(int tk) {
-  yylval.string_val = std::string(yytext, yyleng);
+  yylval.string_val = new std::string(yytext, yyleng);
   for (int i = 0; yytext[i]; ++i)
     if (yytext[i] == '.')
       return tk+1;
@@ -231,7 +231,7 @@ void Lexer::str_lit_begin() {
 
 int Lexer::string_token() {
   BEGIN(INITIAL);
-  yylval.string_val = buffer.str();
+  yylval.string_val = new std::string(buffer.str());
   return STRING;
 }
 
