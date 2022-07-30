@@ -100,12 +100,12 @@ std::ostream & operator << (std::ostream &out, const SymTable &c) {
 }
 
 void SymTable::install(std::string key, const SymTableEntry &entry) {
-    std::stack<SymTableEntry> &s = this->table[key];
-    s.push(entry);
+    std::vector<SymTableEntry> &s = this->table[key];
+    s.push_back(entry);
 }
 
 
-std::stack<SymTableEntry> *SymTable::lookup(std::string key) {
+std::vector<SymTableEntry> *SymTable::lookup(std::string key) {
     SymTable *t = this;
     for (; t; t = t->prev) {
         auto it = t->table.find(key);
