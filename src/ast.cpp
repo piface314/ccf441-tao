@@ -1,6 +1,14 @@
+#include <iostream>
 #include "ast.hpp"
 #include "parser.hpp"
-#include <iostream>
+#include "symtable.hpp"
+
+extern SymTable *env;
+extern YYLTYPE yylloc;
+
+std::ostream &serror() {
+    return std::cerr << yylloc.first_line << ":" << yylloc.first_column << ": semantic unbalance: ";
+}
 
 std::ostream& operator<<(std::ostream& os, ASTNode& node) {
     return node.show(os);
@@ -40,6 +48,10 @@ std::ostream& LiteralNode::show(std::ostream &out) {
 
 IDNode::IDNode(std::string id) {
     this->id = id;
+    if (!env) return;
+    std::stack<SymTableEntry> *e = env->lookup(id);
+    if (!e)
+        { serror() << "`" << id << "` not in scope" << std::endl; exit (1); }
 }
 std::ostream& IDNode::show(std::ostream &out) {
     return out << "ID(" << id << ")";
@@ -104,6 +116,10 @@ PtrTypeNode::PtrTypeNode(int size) {
     this->size = size;
     this->type = NULL;
 }
+PtrTypeNode::PtrTypeNode(int size, TypeNode *type) {
+    this->size = size;
+    this->type = type;
+}
 void PtrTypeNode::set_type(ASTNode *type) {
     COPY(TypeNode,type);
 }
@@ -117,6 +133,12 @@ VarTypeNode::~VarTypeNode() { VDEL(params); }
 VarTypeNode::VarTypeNode(std::string id, std::vector<ASTNode *> &params) {
     this->id = id;
     VCOPY(TypeNode,params);
+    if (!env) return;
+    std::stack<SymTableEntry> *e = env->lookup(id);
+    if (!e)
+        { serror() << "type `" << id << "` not in scope" << std::endl; exit (1); }
+    if (!e->top().node->declares_type())
+        { serror() << "`" << id << "` is not a type\n"; exit(1); }
 }
 std::ostream& VarTypeNode::show(std::ostream &out) {
     out << "VarType(" << id;

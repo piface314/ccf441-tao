@@ -1,11 +1,11 @@
-||| Module |||::: x231, Tree;
+'' ||| Module |||::: x231, Tree;
 
 yin g: @@(Int, Real) |||::| @Char;
 
-||: Some.Other.Module;
-||: Math;
-||: Math ||:||: M;
-||: Math ||::|| sin, cos, tan;
+'' ||: Some.Other.Module;
+'' ||: Math;
+'' ||: Math ||:||: M;
+'' ||: Math ||::|| sin, cos, tan;
 
 ::: Tree(K) = Node(key: K, left: @Tree(K), right: @Tree(K)),
               Leaf(item: K);

@@ -19,6 +19,7 @@
 class ASTNode {
 public:
     virtual ~ASTNode() = default;
+    virtual bool declares_type() { return false; };
     virtual std::ostream& show(std::ostream &out);
     // virtual Value *codegen() = 0;
 };
@@ -110,6 +111,7 @@ public:
     std::string id;
     ~TypeParamNode();
     TypeParamNode(std::string id);
+    bool declares_type() { return true; };
     std::ostream& show(std::ostream &out);
 };
 
@@ -119,6 +121,7 @@ public:
     TypeNode *type;
     ~PtrTypeNode();
     PtrTypeNode(int size);
+    PtrTypeNode(int size, TypeNode *type);
     void set_type(ASTNode *type);
     std::ostream& show(std::ostream &out);
 };
@@ -208,6 +211,7 @@ public:
     TypeDefNode(std::string id, std::vector<ASTNode*> &params);
     void add_constrs(std::vector<ASTNode*> &constrs);
     TypeNode *get_type();
+    bool declares_type() { return true; };
     std::ostream& show(std::ostream &out);
 };
 
@@ -218,6 +222,7 @@ public:
     TypeNode *type;
     ~TypeAliasNode();
     TypeAliasNode(std::string id, std::vector<ASTNode*> &params, ASTNode *type);
+    bool declares_type() { return true; };
     std::ostream& show(std::ostream &out);
 };
 

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include "symtable.hpp"
@@ -16,6 +17,7 @@ int main(int argc, char const *argv[]) {
         std::cerr << "i/o unbalance: no input file" << std::endl;
         return 1;
     }
+    
     yyin = NULL;
     yyin = fopen(argv[1], "r");
     if (!yyin) {
@@ -24,6 +26,7 @@ int main(int argc, char const *argv[]) {
     }
     env = new SymTable();
     yyparse();
+    fclose(yyin);
     int e = errors.size();
     if (e > 0) {
         std::cerr << std::endl;
@@ -31,8 +34,8 @@ int main(int argc, char const *argv[]) {
             std::cerr << *it << std::endl;
         return 1;
     }
-    std::cout << "\nSyntax is balanced.\n";
     if (ast)
         std::cout << *ast << std::endl;
+    
     return 0;
 }

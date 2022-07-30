@@ -138,7 +138,7 @@ import: TRIG6 pro_id                { $$ = new ImportNode(*$2, empty, ""); delet
 // Definição de novos tipos
 type_def: TRIG0 PRO_ID { ENVPUSH; } type_param_list '=' <node>{
         $$ = new TypeDefNode(*$2, *$4); delete $4;
-        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+        env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
     }[def] constrs[cs] {
         ENVPOP;
         dynamic_cast<TypeDefNode*>($def)->add_constrs(*$cs);
@@ -151,11 +151,11 @@ constrs: constrs ',' constr { VPUSH($$,$1,$3); }
        ;
 constr: PRO_ID '(' param_list ')' {
             $$ = new ConstrNode(*$1, *$3); delete $3;
-            env->prev->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+            env->prev->install(*$1, SymTableEntry(Loc(@1), $$)); delete $1;
         }
       | PRO_ID {
             $$ = new ConstrNode(*$1, empty);
-            env->prev->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+            env->prev->install(*$1, SymTableEntry(Loc(@1), $$)); delete $1;
         }
       ;
 
@@ -163,18 +163,18 @@ constr: PRO_ID '(' param_list ')' {
 type_alias: HEX00 PRO_ID { ENVPUSH; } type_param_list '=' type_id {
         ENVPOP;
         $$ = new TypeAliasNode(*$2, *$4, $6); delete $4;
-        env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+        env->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
     };
 
 type_param_list: '(' type_params ')' { $$ = $2; } | { $$ = VEMPTY; } ;
 type_params: type_params ',' PRO_ID {
                 auto node = new TypeParamNode(*$3);
-                env->install(*$3, new SymTableEntry(Loc(@3), node)); delete $3;
+                env->install(*$3, SymTableEntry(Loc(@3), node)); delete $3;
                 VPUSH($$,$1,node);
             }
            | PRO_ID                 {
                 auto node = new TypeParamNode(*$1);
-                env->install(*$1, new SymTableEntry(Loc(@1), node)); delete $1;
+                env->install(*$1, SymTableEntry(Loc(@1), node)); delete $1;
                 VINIT($$,node);
             }
            ;
@@ -197,7 +197,7 @@ func_def: YANG COM_ID {
         } '(' param_list ')' ':' type_id '=' <cnode>{
         with_type_params = false;
         $$ = new YangNode(*$2, *$5, $8); delete $5;
-        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+        env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
     }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
 // Definição de operador (função com identificador de símbolo)
@@ -209,7 +209,7 @@ op_def: YANG sym_id_ {
         params.push_back($5);
         params.push_back($7);
         $$ = new YangNode(*$2, params, $10);
-        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+        env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
     }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
 // Definição de procedimento
@@ -218,7 +218,7 @@ proc_def: WUJI COM_ID {
         } '(' param_list ')' <cnode>{
         with_type_params = false;
         $$ = new WujiNode(*$2, *$5); delete $5;
-        env->prev->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+        env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
     }[def] stmt[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
 
 param_list: params { $$ = $1; }| { $$ = VEMPTY; } ;
@@ -227,17 +227,17 @@ params: params ',' param { VPUSH($$,$1,$3); }
       ;
 param: COM_ID ':' type_id {
         $$ = new ParamNode(*$1, $3);
-        env->install(*$1, new SymTableEntry(Loc(@1), $$)); delete $1;
+        env->install(*$1, SymTableEntry(Loc(@1), $$)); delete $1;
     } ;
 
 // Definição de variável
 var_def: YIN COM_ID ':' type_id {
             $$ = new YinNode(*$2, $4, NULL);
-            env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+            env->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
         }
        | YIN COM_ID ':' type_id '=' expr  {
             $$ = new YinNode(*$2, $4, $6);
-            env->install(*$2, new SymTableEntry(Loc(@2), $$)); delete $2;
+            env->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
         }
        ;
 
@@ -340,12 +340,7 @@ case: HEX47 literal HEX42 stmt { $$ = new CaseNode(true, $2, $4); }
     | HEX47 decons { ENVPUSH; } HEX42 stmt { ENVPOP; $$ = new CaseNode(false, $2, $5); }
     ;
 default: HEX44 stmt { $$ = $2; } | { $$ = NULL; } ;
-decons: pro_id '(' com_id_list ')' {
-        $$ = new DeconsNode(*$1, *$3); delete $3;
-        SymTableEntry *e = env->lookup(*$1);
-        delete $1;
-        if (e == NULL) { /* erro semãntico */ }
-    };
+decons: pro_id '(' com_id_list ')' { $$ = new DeconsNode(*$1, *$3); delete $3; delete $1; };
 com_id_list: com_ids { $$ = $1; } | { $$ = VEMPTY; } ;
 com_ids: com_ids ',' COM_ID { VPUSH($$,$1,new IDNode(*$3)); delete $3; }
        | COM_ID             { VINIT($$,new IDNode(*$1)); delete $1; }
