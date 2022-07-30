@@ -19,9 +19,9 @@ SymTable::SymTable() {
 
     // Tipos básicos
     std::vector<ASTNode*> empty;
-    std::vector<std::string> types = { "Char", "Int", "Long", "Real", "Any" };
-    std::vector<std::string> numeric_types = { "Char", "Int", "Long", "Real" };
-    std::vector<std::string> integer_types = { "Char", "Int", "Long" };
+    std::vector<std::string> types = { "Char", "Int", "Real", "Any" };
+    std::vector<std::string> numeric_types = { "Char", "Int", "Real" };
+    std::vector<std::string> integer_types = { "Char", "Int" };
     for (auto it = types.begin(); it != types.end(); ++it)
         this->install(*it, SymTableEntry(Loc(), new TypeDefNode(*it, empty)));
     

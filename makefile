@@ -1,9 +1,9 @@
 TARGET := taoc
-SRC := lexer parser ast symtable main
+SRC := lexer parser codegen ast symtable main
 OBJS := $(addprefix obj/,$(addsuffix .o,$(SRC)))
 YACCFLAGS := -Wother -Wconflicts-sr -Wconflicts-rr -v
 LLVMCONFIG := llvm-config-12
-CCFLAGS := -O2 -Wall -g -std=c++11 `$(LLVMCONFIG) --cppflags`
+CCFLAGS := -O2 -Wall -g -std=c++17 `$(LLVMCONFIG) --cppflags`
 LDFLAGS := -Wall `$(LLVMCONFIG) --ldflags` -lpthread -ldl -lz -lncurses -rdynamic
 LIBS := `$(LLVMCONFIG) --libs`
 

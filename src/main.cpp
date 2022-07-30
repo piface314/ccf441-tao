@@ -5,6 +5,7 @@
 #include <string>
 #include "symtable.hpp"
 #include "ast.hpp"
+#include "codegen.hpp"
 
 extern FILE *yyin;
 extern int yyparse();
@@ -29,7 +30,6 @@ int main(int argc, char const *argv[]) {
     fclose(yyin);
     int e = errors.size();
     if (e > 0) {
-        std::cerr << std::endl;
         for (auto it = errors.begin(); it != errors.end(); ++it)
             std::cerr << *it << std::endl;
         return 1;
@@ -37,5 +37,7 @@ int main(int argc, char const *argv[]) {
     if (ast)
         std::cout << *ast << std::endl;
     
+    CodeGenerator generator;
+    ast->codegen(generator);
     return 0;
 }

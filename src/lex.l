@@ -16,6 +16,7 @@
 %}
 
 %option yylineno
+%option nounput
 
 %x COMMENT
 %x COMMENTS
@@ -247,7 +248,7 @@ void Lexer::str_lit_push_hex() {
   buffer << (char)((char_int_val(yytext[2]) << 4) + char_int_val(yytext[3]));
 }
 
-void Lexer::error(char *msg) {
+void Lexer::error(std::string msg) {
   int line = yylloc.first_line;
   int col = yylloc.first_column;
   std::cerr << line << ':' << col << ": lexical unbalance: " << msg << std::endl;

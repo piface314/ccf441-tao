@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include <sstream>
+#include <string>
 
 class Lexer {
 private:
@@ -28,7 +29,7 @@ public:
     void str_lit_push();
     void str_lit_push_esc();
     void str_lit_push_hex();
-    void error(char *msg);
+    void error(std::string msg);
 };
 
 #endif
