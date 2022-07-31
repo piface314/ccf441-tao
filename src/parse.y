@@ -356,8 +356,8 @@ case: HEX47 literal HEX42 stmt { $$ = new CaseNode(true, $2, $4); }
 default: HEX44 stmt { $$ = $2; } | { $$ = NULL; } ;
 decons: pro_id '(' com_id_list ')' { $$ = new DeconsNode(*$1, *$3); delete $3; delete $1; };
 com_id_list: com_ids { $$ = $1; } | { $$ = VEMPTY; } ;
-com_ids: com_ids ',' COM_ID { VPUSH($$,$1,new IDNode(*$3)); delete $3; }
-       | COM_ID             { VINIT($$,new IDNode(*$1)); delete $1; }
+com_ids: com_ids ',' COM_ID { VPUSH($$,$1,new IDNode(*$3,false)); delete $3; }
+       | COM_ID             { VINIT($$,new IDNode(*$1,false)); delete $1; }
        ;
 
 // Expressão de alocação de memória

@@ -18,10 +18,16 @@ VarTypeNode bool_type("Bool", empty);
 std::vector<std::pair<std::string,std::string>> coercion = {
     std::make_pair("Int", "Char"),
     std::make_pair("Real", "Int"),
-    std::make_pair("Real", "Char"),
     std::make_pair("Bool", "Int"),
     std::make_pair("Bool", "Char")
 };
+
+std::string types_str(std::vector<TypeNode*>ts) {
+    std::string p;
+    for (auto it = ts.begin(); it != ts.end(); ++it)
+        p += (it == ts.end()-1 ? (*it)->str() : (*it)->str() + ",");
+    return "(" + p + ")";
+}
 
 std::ostream &serr() {
     return std::cerr << CL_FG_RED CL_BOLD << yylloc.first_line << ":" << yylloc.first_column
@@ -68,9 +74,9 @@ std::ostream& LiteralNode::show(std::ostream &out) {
     return out;
 }
 
-IDNode::IDNode(std::string id) {
+IDNode::IDNode(std::string id, bool chk) {
     this->id = id;
-    if (!env) return;
+    if (!chk || !env) return;
     std::vector<SymTableEntry> *es = env->lookup(id);
     if (!es)
         { serr() << "`" << id << "` not in scope" << std::endl; exit(1); }
@@ -233,10 +239,7 @@ TypeChk FunTypeNode::check(TypeNode *node) {
     return chk;
 }
 std::string FunTypeNode::str() {
-    std::string p;
-    for (auto it = params.begin(); it != params.end(); ++it)
-        p += (it == params.end()-1 ? (*it)->str() : (*it)->str() + ",");
-    return "(" + p + ") |||::| " + ret->str();
+    return types_str(params) + " |||::| " + ret->str();
 }
 
 ProcTypeNode::~ProcTypeNode() { VDEL(params); }
@@ -263,10 +266,7 @@ TypeChk ProcTypeNode::check(TypeNode *node) {
     return chk;
 }
 std::string ProcTypeNode::str() {
-    std::string p;
-    for (auto it = params.begin(); it != params.end(); ++it)
-        p += (it == params.end()-1 ? (*it)->str() : (*it)->str() + ",");
-    return "(" + p + ") |||:||";
+    return types_str(params) + " |||:||";
 }
 
 YinNode::~YinNode() { delete init; }
@@ -301,8 +301,18 @@ void YangNode::set_type_params(std::vector<ASTNode*> &t_params) {
     VCOPY(TypeParamNode,t_params);
 }
 void YangNode::set_body(ASTNode *body) {
-    // conferir se o corpo da função retorna o tipo esperado
     COPY(ExprNode,body);
+    TypeNode *t = this->body->get_type();
+    if (!t) {
+        serr() << "no type for `" << id << "` expression (expected "
+            << ret->str() << ")" << std::endl;
+        exit(1);
+    }
+    if (!ret->check(t)) {
+        serr() << "incompatible type " << t->str() << " for `" << id << "` expression (expected "
+            << ret->str() << ")" << std::endl;
+        exit(1);
+    }
 }
 std::ostream& YangNode::show(std::ostream &out) {
     out << "Yang(";
@@ -457,6 +467,8 @@ ReturnNode::ReturnNode(ASTNode *expr) {
         if (!expr)
             { serr() << "|||||: must return a value for yang" << std::endl; exit(1); }
         TypeNode *t = this->expr->get_type();
+        if (!t)
+            { serr() << "|||||: must return a value for yang" << std::endl; exit(1); }
         if (!ret->check(t)) {
             serr() << "incompatible return type " << t->str()
                 << " (expected " << ret->str() << ")" << std::endl;
@@ -473,8 +485,10 @@ std::ostream& ReturnNode::show(std::ostream &out) {
 
 FreeNode::~FreeNode() { delete expr; }
 FreeNode::FreeNode(ASTNode *expr) {
-    // verificar se o tipo de retorno da expressão é ponteiro
     COPY(ExprNode,expr);
+    PtrTypeNode *pt = dynamic_cast<PtrTypeNode*>(this->expr->get_type());
+    if (!pt)
+        { serr() << "cannot free memory from non pointer" << std::endl; exit(1); }
 }
 std::ostream& FreeNode::show(std::ostream &out) {
     return out << "Free(" << *expr << ")";
@@ -545,7 +559,7 @@ BinaryOpNode::BinaryOpNode(std::string op, ASTNode *arg1, ASTNode *arg2) {
         if (chk1 == TypeChk::EQ && chk2 == TypeChk::EQ) {
             ret = t->ret;
             break;
-        } else if (chk1 != TypeChk::INC && chk2 != TypeChk::INC && !ret)
+        } else if (chk1 && chk2 && !ret)
             ret = t->ret;
     }
     if (!ret) { 
@@ -563,7 +577,8 @@ std::ostream& BinaryOpNode::show(std::ostream &out) {
 BlockNode::~BlockNode() { VDEL(stmts); }
 BlockNode::BlockNode(std::vector<ASTNode*> &stmts) {
     VCOPY(StmtNode,stmts);
-    // ???????
+    if (this->stmts.empty()) return;
+    this->expr_type = this->stmts.back()->get_type();
 }
 std::ostream& BlockNode::show(std::ostream &out) {
     out << "Block(";
@@ -590,20 +605,22 @@ std::ostream& AssignNode::show(std::ostream &out) {
 }
 
 AddressNode::~AddressNode() { delete addr; delete offset; }
-AddressNode::AddressNode(ASTNode *addr) {
-    // verificar se o tipo de addr é ponteiro
-    COPY(ExprNode,addr);
-    this->offset = NULL;
-}
 AddressNode::AddressNode(ASTNode *addr, ASTNode *offset) {
-    // verificar se o tipo de addr é ponteiro
-    // verificar se o tipo de offset é Int
     COPY(ExprNode,addr);
     COPY(ExprNode,offset);
+    PtrTypeNode *pt = dynamic_cast<PtrTypeNode*>(this->addr->get_type());
+    if (!pt) 
+        { serr() << "cannot address non pointer value" << std::endl; exit(1); }
+    if (this->offset) {
+        TypeNode *t = this->offset->get_type();
+        if (!int_type.check(t))
+            { serr() << "cannot address pointer with non integer value" << std::endl; exit(1); }
+    }
+    this->expr_type = pt->type;
 }
 std::ostream& AddressNode::show(std::ostream &out) {
     out << "Addr(" << *addr << ", ";
-    if (offset) out << "@"; else out << *offset;
+    if (offset) out << *offset; else out << "@";
     return out << ")";
 }
 
@@ -689,8 +706,17 @@ MallocNode::MallocNode(ASTNode *type, ASTNode *init, ASTNode *n) {
     COPY(TypeNode,type);
     COPY(ExprNode,init);
     COPY(ExprNode,n);
-    // verificar se n retorna inteiro
-    // se tiver init, verificar se ele retorna alguma coisa
+    if (this->n && !int_type.check(this->n->get_type())) {
+        serr() << "cannot allocate non integer amount of memory" << std::endl;
+        exit(1);
+    }
+    if (this->init) {
+        TypeNode *t = this->init->get_type();
+        if (!t)
+            { serr() << "no value to infer allocation type" << std::endl; exit(1); }
+        this->expr_type = new PtrTypeNode(0, t);
+    } else
+        this->expr_type = new PtrTypeNode(0, this->type);
 }
 std::ostream& MallocNode::show(std::ostream &out) {
     out << "Malloc(";
@@ -704,9 +730,42 @@ CallNode::~CallNode() { VDEL(args); }
 CallNode::CallNode(std::string id, std::vector<ASTNode*> &args) {
     this->id = id;
     VCOPY(ExprNode,args);
-    // verificar se a quantidade de argumentos bate com os parametros
-    // verificar se o tipo dos argumentos bate
-    // verificar se a função existe
+    std::vector<SymTableEntry> *es = env->lookup_all(id);
+    if (!es)
+        { serr() << "function " << id << " not in scope" << std::endl; exit(1); }
+    std::vector<TypeNode*> targs;
+    int i = 0;
+    for (auto &it : this->args) {
+        ++i;
+        TypeNode *targ = it->get_type();
+        if (!targ) {
+            serr() << "no value for `" << id << "` argument " << i << std::endl;
+            exit(1);
+        }
+        targs.push_back(targ);
+    }
+    TypeNode *ret = NULL;
+    for (auto &it: *es) {
+        CallableNode *cnode = dynamic_cast<CallableNode*>(it.node);
+        if (cnode->params.size() != args.size()) continue;
+        TypeChk chk = TypeChk::EQ;
+        for (size_t i = 0; i < args.size(); ++i) {
+            TypeNode *tp = cnode->params[i]->get_type();
+            TypeNode *ta = targs[i]; 
+            TypeChk c = tp->check(ta);
+            if (!c) { chk = c; break; }
+            if (c == TypeChk::CMP) chk = c;
+        }
+        if (chk == TypeChk::EQ) { ret = cnode->ret; break; }
+        if (chk && !ret) ret = cnode->ret;
+    }
+    if (!ret) {
+        serr() << "no compatible definition of `" << id << "` for argument types "
+            << types_str(targs) << std::endl;
+        exit(1);
+    }
+    this->expr_type = ret;
+    delete es;
 }
 std::ostream& CallNode::show(std::ostream &out) {
     out << "Call(" << id;

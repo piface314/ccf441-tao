@@ -74,7 +74,7 @@ class IDNode : public ExprNode {
 public:
     std::string id;
     ~IDNode() {};
-    IDNode(std::string id);
+    IDNode(std::string id, bool chk = true);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
@@ -377,8 +377,7 @@ public:
     ExprNode *addr;
     ExprNode *offset;
     ~AddressNode();
-    AddressNode(ASTNode *addr);
-    AddressNode(ASTNode *addr, ASTNode *offset);
+    AddressNode(ASTNode *addr, ASTNode *offset = NULL);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };

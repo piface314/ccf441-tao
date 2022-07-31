@@ -1,24 +1,20 @@
-::: Tree(K,T) = Node(k: K, left: @Tree, right: @Tree),
-                Leaf(i: T);
+::: Tree = Node(k: Int, left: @Tree, right: @Tree),
+           Leaf(i: Int);
 
-:::::: ITree(K) = Tree(K, Int);
-
-::::|| K, T
-yang add(item: T, tree: @Tree(K, T)): @Tree(K, T) = {
-    yin itemKey: K = getKey(item);
-    yin newLeaf: @Tree(K, T) = ::| Tree(K, T);
-    |:| @tree
+yang add(item: Int, tree: @Tree): @Tree = {
+    |:| tree@
     |:|||| Node(k, l, r) |:|:|:
-        :|: itemKey < k :|:|::
+        :|: item < k :|:|::
             tree.lt = add(item, l)
         :|::||
             tree.rt = add(item, r)
     |:|||| Leaf(i) |:|:|: {
+        yin newLeaf: @Tree(K, T) = ::| Tree(K, T);
         yin leafKey: K = getKey(i);
-        :|: itemKey < leafKey :|:|::
+        :|: item < leafKey :|:|::
             ::||:| Node(leafKey, newLeaf, tree)
         :|::||
-            ::||:| Node(itemKey, tree, newLeaf)
+            ::||:| Node(item, tree, newLeaf)
       }
 };
 

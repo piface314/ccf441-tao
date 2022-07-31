@@ -9,14 +9,13 @@
 9. Break *
 10. Continue *
 11. Return *
-
-Yang
-Call
-Malloc
-Decons
-Access
-Address
-Block?
-Free
-TypeDef/Constr
-Match/Case
+12. Block *
+13. Yang *
+14. Call *
+15. Address *
+16. Malloc *
+17. Free *
+18. Access
+19. TypeDef/Constr
+20. Match/Case
+21. Decons
