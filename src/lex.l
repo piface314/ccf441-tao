@@ -7,7 +7,8 @@
   #include <vector>
   #include "parser.hpp"
   #include "lexer.hpp"
-  
+  #include "colors.hpp"
+
   extern "C" int yywrap() {return 1;}
 
   #define YY_USER_ACTION lexer.update_yyloc();
@@ -251,7 +252,7 @@ void Lexer::str_lit_push_hex() {
 void Lexer::error(std::string msg) {
   int line = yylloc.first_line;
   int col = yylloc.first_column;
-  std::cerr << line << ':' << col << ": lexical unbalance: " << msg << std::endl;
+  std::cerr << CL_FG_RED CL_BOLD << line << ':' << col << ": lexical unbalance: " CL_RESET << msg << std::endl;
   exit(1);
 }
 

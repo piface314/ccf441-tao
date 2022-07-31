@@ -31,6 +31,7 @@ public:
     friend std::ostream & operator << (std::ostream &out, const SymTable &t);
     void install(std::string key, const SymTableEntry &entry);
     std::vector<SymTableEntry> *lookup(std::string key);
+    std::vector<SymTableEntry> *lookup_all(std::string key);
 };
 
 #endif

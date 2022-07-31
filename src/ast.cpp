@@ -2,10 +2,18 @@
 #include "ast.hpp"
 #include "parser.hpp"
 #include "symtable.hpp"
+#include "colors.hpp"
 
 extern SymTable *env;
 extern YYLTYPE yylloc;
 extern std::vector<ASTNode*> empty;
+extern std::vector<StmtNode*> loops;
+extern std::vector<CallableNode*> procs;
+
+VarTypeNode char_type("Char", empty);
+VarTypeNode int_type("Int", empty);
+VarTypeNode real_type("Real", empty);
+VarTypeNode bool_type("Bool", empty);
 
 std::vector<std::pair<std::string,std::string>> coercion = {
     std::make_pair("Int", "Char"),
@@ -16,7 +24,8 @@ std::vector<std::pair<std::string,std::string>> coercion = {
 };
 
 std::ostream &serr() {
-    return std::cerr << yylloc.first_line << ":" << yylloc.first_column << ": semantic unbalance: ";
+    return std::cerr << CL_FG_RED CL_BOLD << yylloc.first_line << ":" << yylloc.first_column
+        << ": semantic unbalance: " CL_RESET;
 }
 
 std::ostream& operator<<(std::ostream& os, ASTNode& node) {
@@ -30,22 +39,22 @@ std::ostream& ASTNode::show(std::ostream &out) {
 LiteralNode::LiteralNode(int n) {
     this->type_tag = INTEGER;
     this->val.n = n;
-    this->expr_type = new VarTypeNode("Int", empty);
+    this->expr_type = &int_type;
 }
 LiteralNode::LiteralNode(double x) {
     this->type_tag = REAL;
     this->val.x = x;
-    this->expr_type = new VarTypeNode("Real", empty);
+    this->expr_type = &real_type;
 }
 LiteralNode::LiteralNode(char c) {
     this->type_tag = CHAR;
     this->val.c = c;
-    this->expr_type = new VarTypeNode("Char", empty);
+    this->expr_type = &char_type;
 }
 LiteralNode::LiteralNode(std::string s) {
     this->type_tag = STRING;
     new (&this->val.s) std::string(s);
-    this->expr_type = new PtrTypeNode(s.size()+1, new VarTypeNode("Char", empty));
+    this->expr_type = new PtrTypeNode(s.size()+1, &char_type);
 }
 std::ostream& LiteralNode::show(std::ostream &out) {
     out << "Literal(";
@@ -112,6 +121,7 @@ ParamNode::~ParamNode() { delete type; }
 ParamNode::ParamNode(std::string id, ASTNode *type) {
     this->id = id;
     COPY(TypeNode,type);
+
 }
 std::ostream& ParamNode::show(std::ostream &out) {
     return out << "Param(" << id << ", " << *type << ")";
@@ -126,6 +136,9 @@ std::ostream& TypeParamNode::show(std::ostream &out) {
 }
 TypeChk TypeParamNode::check(TypeNode *node) {
     return TypeChk::INC;
+}
+std::string TypeParamNode::str() {
+    return id;
 }
 
 PtrTypeNode::~PtrTypeNode() { delete type; }
@@ -150,12 +163,10 @@ TypeChk PtrTypeNode::check(TypeNode *node) {
     if (!pnode) return TypeChk::INC;
     return this->type->check(pnode->type);
 }
+std::string PtrTypeNode::str() {
+    return (size ? "[" + std::to_string(size) + "]" : "@") + type->str();
+}
 
-/*
-
-::: String = String();
-yin s: String;
-*/
 VarTypeNode::~VarTypeNode() { VDEL(params); }
 VarTypeNode::VarTypeNode(std::string id, std::vector<ASTNode *> &params) {
     this->id = id;
@@ -186,6 +197,14 @@ TypeChk VarTypeNode::check(TypeNode *node) {
             return TypeChk::CMP;
     return TypeChk::INC;
 }
+std::string VarTypeNode::str() {
+    if (params.empty())
+        return id;
+    std::string p;
+    for (auto it = params.begin(); it != params.end(); ++it)
+        p += (it == params.end()-1 ? (*it)->str() : (*it)->str() + ",");
+    return id + "(" + p + ")";
+}
 
 FunTypeNode::~FunTypeNode() { VDEL(params); delete ret; }
 FunTypeNode::FunTypeNode(std::vector<ASTNode *> &params, ASTNode *ret) {
@@ -198,7 +217,26 @@ std::ostream& FunTypeNode::show(std::ostream &out) {
     return out << ", " << *ret << ")";
 }
 TypeChk FunTypeNode::check(TypeNode *node) {
-    return TypeChk::INC;
+    FunTypeNode *fnode = dynamic_cast<FunTypeNode*>(node);
+    if (!fnode) return TypeChk::INC;
+    if (params.size() != fnode->params.size()) return TypeChk::INC;
+    TypeChk chk = TypeChk::EQ;
+    int i = 0;
+    for (auto &p : params) {
+        TypeChk c = p->check(fnode->params[i]);
+        if (c == TypeChk::INC) return TypeChk::INC;
+        else if (c == TypeChk::CMP) chk = c;
+        ++i;
+    }
+    if (ret->check(fnode->ret) != TypeChk::EQ)
+        return TypeChk::INC;
+    return chk;
+}
+std::string FunTypeNode::str() {
+    std::string p;
+    for (auto it = params.begin(); it != params.end(); ++it)
+        p += (it == params.end()-1 ? (*it)->str() : (*it)->str() + ",");
+    return "(" + p + ") |||::| " + ret->str();
 }
 
 ProcTypeNode::~ProcTypeNode() { VDEL(params); }
@@ -211,7 +249,24 @@ std::ostream& ProcTypeNode::show(std::ostream &out) {
     return out << ")";
 }
 TypeChk ProcTypeNode::check(TypeNode *node) {
-    return TypeChk::INC;
+    ProcTypeNode *pnode = dynamic_cast<ProcTypeNode*>(node);
+    if (!pnode) return TypeChk::INC;
+    if (params.size() != pnode->params.size()) return TypeChk::INC;
+    TypeChk chk = TypeChk::EQ;
+    int i = 0;
+    for (auto &p : params) {
+        TypeChk c = p->check(pnode->params[i]);
+        if (c == TypeChk::INC) return TypeChk::INC;
+        else if (c == TypeChk::CMP) chk = c;
+        ++i;
+    }
+    return chk;
+}
+std::string ProcTypeNode::str() {
+    std::string p;
+    for (auto it = params.begin(); it != params.end(); ++it)
+        p += (it == params.end()-1 ? (*it)->str() : (*it)->str() + ",");
+    return "(" + p + ") |||:||";
 }
 
 YinNode::~YinNode() { delete init; }
@@ -219,8 +274,15 @@ YinNode::YinNode(std::string id, ASTNode *type, ASTNode *init) {
     this->id = id;
     COPY(TypeNode,type);
     COPY(ExprNode,init);
-    // verificar se tiver init, verificar se o tipo da expressão bate com
-    // o tipo da variável.
+    if (!init) return;
+    TypeNode *t = this->init->get_type();
+    if (!t)
+        { serr() << "no value for initialization" << std::endl; exit(1); }
+    if (!this->type->check(t)) {
+        serr() << "invalid initialization for `" << id << ": " << this->type->str()
+            << "` from type " << t->str() << std::endl;
+        exit(1);
+    }
 }
 std::ostream& YinNode::show(std::ostream &out) {
     out << "Yin(" << id << ", " << *type;
@@ -261,6 +323,7 @@ TypeNode *YangNode::get_type() {
 WujiNode::~WujiNode() { VDEL(t_params); VDEL(params); delete body; }
 WujiNode::WujiNode(std::string id, std::vector<ASTNode*> &params) {
     this->id = id;
+    this->ret = NULL;
     VCOPY(ParamNode,params);
 }
 void WujiNode::set_type_params(std::vector<ASTNode*> &t_params) {
@@ -328,10 +391,17 @@ std::ostream& TypeAliasNode::show(std::ostream &out) {
 
 WhileNode::~WhileNode() { delete cond; delete step; delete body; }
 WhileNode::WhileNode(ASTNode *cond, ASTNode *step, ASTNode *body) {
-    // verificar se condição é booleana
     COPY(ExprNode,cond);
     COPY(StmtNode,step);
     COPY(StmtNode,body);
+    TypeNode *t = this->cond->get_type();
+    if (!t)
+        { serr() << "no value for :|| condition"; exit(1); }
+    if (!bool_type.check(t)) {
+        serr() << "type " << t->str() << " incompatible for :|| condition"
+            << " (expected Bool)" << std::endl; 
+        exit(1);
+    }
 }
 std::ostream& WhileNode::show(std::ostream &out) {
     out << "While(" << *cond << ", ";
@@ -341,32 +411,59 @@ std::ostream& WhileNode::show(std::ostream &out) {
 
 RepeatNode::~RepeatNode() { delete body; delete cond; delete step; }
 RepeatNode::RepeatNode(ASTNode *body, ASTNode *cond, ASTNode *step) {
-    // verificar se condição é booleana
     COPY(StmtNode,body);
     COPY(ExprNode,cond);
     COPY(StmtNode,step);
+    TypeNode *t = this->cond->get_type();
+    if (!t)
+        { serr() << "no value for :||:|| condition"; exit(1); }
+    if (!bool_type.check(t)) {
+        serr() << "type " << t->str() << " incompatible for :||:|| condition"
+            << " (expected Bool)" << std::endl; 
+        exit(1);
+    }
 }
 std::ostream& RepeatNode::show(std::ostream &out) {
     out << "Repeat(" << *body << ", " << *cond;
     return (step ? out << ", " << *step : out) << ")"; 
 }
 
-// verificar se está dentro de um loop
-
+BreakNode::BreakNode() {
+    if (loops.empty())
+        { serr() << ":||||: must be inside a loop" << std::endl; exit(1); }
+    loop = loops.back();
+}
 std::ostream& BreakNode::show(std::ostream &out) {
     return out << "Break()";
 }
 
-// verificar se está dentro de um loop
-
+ContinueNode::ContinueNode() {
+    if (loops.empty())
+        { serr() << ":||:|: must be inside a loop" << std::endl; exit(1); }
+    loop = loops.back();
+}
 std::ostream& ContinueNode::show(std::ostream &out) {
     return out << "Continue()";
 }
 
 ReturnNode::~ReturnNode() { delete expr; }
 ReturnNode::ReturnNode(ASTNode *expr) {
-    // verificar se está dentro de uma função
     COPY(ExprNode,expr);
+    if (procs.empty())
+        { serr() << "|||||: must be inside yang or wuji" << std::endl; exit(1); }
+    proc = procs.back();
+    TypeNode *ret = proc->ret;
+    if (ret) {
+        if (!expr)
+            { serr() << "|||||: must return a value for yang" << std::endl; exit(1); }
+        TypeNode *t = this->expr->get_type();
+        if (!ret->check(t)) {
+            serr() << "incompatible return type " << t->str()
+                << " (expected " << ret->str() << ")" << std::endl;
+            exit(1);
+        }
+    } else if (expr)
+        { serr() << "|||||: cannot return a value for wuji" << std::endl; exit(1); }
 }
 std::ostream& ReturnNode::show(std::ostream &out) {
     out << "Return(";
@@ -383,11 +480,43 @@ std::ostream& FreeNode::show(std::ostream &out) {
     return out << "Free(" << *expr << ")";
 }
 
+RefNode::~RefNode() { delete expr; }
+RefNode::RefNode(ASTNode *expr) {
+    COPY(ExprNode,expr);
+    this->expr_type = new PtrTypeNode(0, this->expr->get_type());
+}
+std::ostream& RefNode::show(std::ostream &out) {
+    return out << "Ref(" << *expr << ")";
+}
+
 UnaryOpNode::~UnaryOpNode() { delete arg; }
-UnaryOpNode::UnaryOpNode(std::string op, ASTNode *arg) {
-    // verificar se a expressão é adequada. @ ! ~ -
+UnaryOpNode::UnaryOpNode(char op, ASTNode *arg) {
     this->op = op;
     COPY(ExprNode,arg);
+    std::vector<SymTableEntry> *es = env->lookup_all(std::string(1,op));
+    if (!es)
+        { serr() << "operator " << op << " not in scope" << std::endl; exit(1); }
+    TypeNode *t1 = this->arg->get_type();
+    if (!t1)
+        { serr() << "no value for operand" << std::endl; exit(1); }
+    TypeNode *ret = NULL;
+    for (auto &it: *es) {
+        FunTypeNode *t = dynamic_cast<FunTypeNode*>(it.node->get_type());
+        if (t->params.size() != 1) continue;
+        TypeChk chk = t->params[0]->check(t1);
+        if (chk == TypeChk::EQ) {
+            ret = t->ret;
+            break;
+        } else if (chk != TypeChk::INC && !ret)
+            ret = t->ret;
+    }
+    if (!ret) { 
+        serr() << "no compatible operator " << op << " for argument type "
+            << t1->str() << std::endl;
+        exit(1);
+    }
+    this->expr_type = ret;
+    delete es;
 }
 std::ostream& UnaryOpNode::show(std::ostream &out) {
     return out << "UnaryOp(" << op << ", " << *arg << ")";
@@ -398,25 +527,34 @@ BinaryOpNode::BinaryOpNode(std::string op, ASTNode *arg1, ASTNode *arg2) {
     this->op = op;
     COPY(ExprNode,arg1);
     COPY(ExprNode,arg2);
-    std::vector<SymTableEntry> *es = env->lookup(op);
+    std::vector<SymTableEntry> *es = env->lookup_all(op);
     if (!es)
-        { serr() << "operator " << op << " not in scope"; exit(1); }
+        { serr() << "operator " << op << " not in scope" << std::endl; exit(1); }
     TypeNode *t1 = this->arg1->get_type();
     TypeNode *t2 = this->arg2->get_type();
+    if (!t1)
+        { serr() << "no value for first operand" << std::endl; exit(1); }
+    if (!t2)
+        { serr() << "no value for second operand" << std::endl; exit(1); }
     TypeNode *ret = NULL;
     for (auto &it: *es) {
         FunTypeNode *t = dynamic_cast<FunTypeNode*>(it.node->get_type());
+        if (t->params.size() != 2) continue;
         TypeChk chk1 = t->params[0]->check(t1);
         TypeChk chk2 = t->params[1]->check(t2);
         if (chk1 == TypeChk::EQ && chk2 == TypeChk::EQ) {
             ret = t->ret;
             break;
-        } else if (chk1 != TypeChk::INC && chk2 != TypeChk::INC)
+        } else if (chk1 != TypeChk::INC && chk2 != TypeChk::INC && !ret)
             ret = t->ret;
     }
-    if (!ret)
-        { serr() << "incompatible argument types for " << op << std::endl; exit(1); }
+    if (!ret) { 
+        serr() << "no compatible operator " << op << " for argument types "
+            << t1->str() << " and " << t2->str() << std::endl;
+        exit(1);
+    }
     this->expr_type = ret;
+    delete es;
 }
 std::ostream& BinaryOpNode::show(std::ostream &out) {
     return out << "BinaryOp(" << op << ", " << *arg1 << ", " << *arg2 << ")";
@@ -425,9 +563,9 @@ std::ostream& BinaryOpNode::show(std::ostream &out) {
 BlockNode::~BlockNode() { VDEL(stmts); }
 BlockNode::BlockNode(std::vector<ASTNode*> &stmts) {
     VCOPY(StmtNode,stmts);
+    // ???????
 }
 std::ostream& BlockNode::show(std::ostream &out) {
-    // ???????
     out << "Block(";
     VSHOW(stmts);
     return out << ")";
@@ -435,9 +573,17 @@ std::ostream& BlockNode::show(std::ostream &out) {
 
 AssignNode::~AssignNode() { delete lhs; delete rhs;}
 AssignNode::AssignNode(ASTNode *lhs, ASTNode *rhs) {
-    // verificar se os tipos são compatíveis
     COPY(ExprNode,lhs);
     COPY(ExprNode,rhs);
+    TypeNode *tl = this->lhs->get_type();
+    TypeNode *tr = this->rhs->get_type();
+    if (!tr)
+        { serr() << "no value to assign" << std::endl; exit(1); }
+    if (!tl->check(tr)) {
+        serr() << "invalid type " << tr->str() << " for assignment "
+            << "(expected " << tl->str() << ")" << std::endl; exit(1);
+    }
+    this->expr_type = tr;
 }
 std::ostream& AssignNode::show(std::ostream &out) {
     return out << "Assign(" << *lhs << ", " << *rhs << ")";
@@ -473,13 +619,26 @@ std::ostream& AccessNode::show(std::ostream &out) {
 
 IfNode::~IfNode() { delete cond; delete body_then; delete body_else; }
 IfNode::IfNode(ASTNode *cond, ASTNode *body_then) {
-    // verificar se o tipo de cond é Bool
     COPY(ExprNode,cond);
     COPY(StmtNode,body_then);
     this->body_else = NULL;
+    TypeNode *t = this->cond->get_type();
+    if (!t)
+        { serr() << "no value for :|: condition"; exit(1); }
+    if (!bool_type.check(t)) {
+        serr() << "type " << t->str() << " incompatible for :|: condition"
+            << " (expected Bool)" << std::endl; 
+        exit(1);
+    }
 }
 void IfNode::set_else(ASTNode *body_else) {
     COPY(StmtNode,body_else);
+    if (!body_else) return;
+    TypeNode *tt = this->body_then->get_type();
+    TypeNode *te = this->body_else->get_type();
+    if (!tt || !te) return;
+    if (tt->check(te))
+        this->expr_type = tt;
 }
 std::ostream& IfNode::show(std::ostream &out) {
     out << "If(" << *cond << ", " << *body_then;
@@ -490,8 +649,9 @@ std::ostream& IfNode::show(std::ostream &out) {
 CaseNode::~CaseNode() { delete cond; delete body; }
 CaseNode::CaseNode(bool literal, ASTNode *cond, ASTNode *body) {
     this->literal = literal;
-    this->cond = cond;
+    COPY(ExprNode,cond);
     COPY(StmtNode,body);
+    this->expr_type = this->body->get_type();
 }
 std::ostream& CaseNode::show(std::ostream &out) {
     return out << "Case(" << *cond << ", " << *body << ")";

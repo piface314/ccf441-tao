@@ -28,29 +28,23 @@ public:
 
 std::ostream& operator<<(std::ostream& os, ASTNode& node);
 
-// yin x: @[5]Int; 
-// Yin(x, PtrType(@, PtrType(5, VarType(Int))))
-
-// i * 2
-// expr = BinaryOp(*,ID(i),Literal(2))
-// expr->get_type() --->
-
-enum TypeChk { INC, CMP, EQ };
+enum TypeChk { INC = 0, CMP = 1, EQ = 2 };
 
 class TypeNode : public ASTNode {
 public:
     virtual ~TypeNode() = default;
     virtual TypeChk check(TypeNode *node) = 0;
+    virtual std::string str() = 0;
 };
 class StmtNode : public ASTNode {
 public:
+    TypeNode *expr_type = NULL;
     virtual ~StmtNode() = default;
+    TypeNode *get_type() { return expr_type; }
 };
 class ExprNode : public StmtNode {
 public:
-    TypeNode *expr_type;
     virtual ~ExprNode() = default;
-    TypeNode *get_type() { return expr_type; }
 };
 
 union LiteralVal {
@@ -124,6 +118,7 @@ public:
     ParamNode(std::string id, ASTNode *type);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
+    TypeNode *get_type() { return type; }
 };
 
 class TypeParamNode : public TypeNode {
@@ -135,6 +130,7 @@ public:
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
     TypeChk check(TypeNode *node);
+    std::string str();
 };
 
 class PtrTypeNode : public TypeNode {
@@ -148,6 +144,7 @@ public:
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
     TypeChk check(TypeNode *node);
+    std::string str();
 };
 
 class VarTypeNode : public TypeNode {
@@ -159,6 +156,7 @@ public:
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
     TypeChk check(TypeNode *node);
+    std::string str();
 };
 
 class FunTypeNode : public TypeNode {
@@ -170,6 +168,7 @@ public:
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
     TypeChk check(TypeNode *node);
+    std::string str();
 };
 
 class ProcTypeNode : public TypeNode {
@@ -180,6 +179,7 @@ public:
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
     TypeChk check(TypeNode *node);
+    std::string str();
 };
 
 class YinNode : public StmtNode {
@@ -198,6 +198,7 @@ class CallableNode : public StmtNode {
 public:
     std::string id;
     std::vector<ParamNode*> params;
+    TypeNode *ret;
     virtual ~CallableNode() = default;
     virtual void set_type_params(std::vector<ASTNode*> &t_params) {};
     virtual void set_body(ASTNode *body) {};
@@ -206,7 +207,6 @@ public:
 class YangNode : public CallableNode {
 public:
     std::vector<TypeParamNode*> t_params;
-    TypeNode *ret;
     ExprNode *body;
     TypeNode *type;
     ~YangNode();
@@ -232,7 +232,6 @@ public:
 
 class ConstrNode : public CallableNode {
 public:
-    TypeNode *ret;
     ~ConstrNode();
     ConstrNode(std::string id, std::vector<ASTNode *> &params);
     std::ostream& show(std::ostream &out);
@@ -271,6 +270,7 @@ public:
     StmtNode *step;
     StmtNode *body;
     ~WhileNode();
+    WhileNode() {};
     WhileNode(ASTNode *cond, ASTNode *step, ASTNode *body);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
@@ -282,6 +282,7 @@ public:
     ExprNode *cond;
     StmtNode *step;
     ~RepeatNode();
+    RepeatNode() {};
     RepeatNode(ASTNode *body, ASTNode *cond, ASTNode *step);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
@@ -289,20 +290,25 @@ public:
 
 class BreakNode : public StmtNode {
 public:
+    StmtNode *loop;
     ~BreakNode() {};
+    BreakNode();
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
 
 class ContinueNode : public StmtNode {
 public:
+    StmtNode *loop;
     ~ContinueNode() {};
+    ContinueNode();
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
 
 class ReturnNode : public StmtNode {
 public:
+    CallableNode *proc;
     ExprNode *expr;
     ~ReturnNode();
     ReturnNode(ASTNode *expr);
@@ -319,12 +325,21 @@ public:
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
 
+class RefNode : public ExprNode {
+public:
+    ExprNode *expr;
+    ~RefNode();
+    RefNode(ASTNode *expr);
+    std::ostream& show(std::ostream &out);
+    llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
+};
+
 class UnaryOpNode : public ExprNode {
 public:
-    std::string op;
+    char op;
     ExprNode *arg;
     ~UnaryOpNode();
-    UnaryOpNode(std::string op, ASTNode *arg);
+    UnaryOpNode(char op, ASTNode *arg);
     std::ostream& show(std::ostream &out);
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
@@ -389,10 +404,10 @@ public:
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
 
-class CaseNode : public ASTNode {
+class CaseNode : public ExprNode {
 public:
     bool literal;
-    ASTNode *cond;
+    ExprNode *cond;
     StmtNode *body;
     ~CaseNode();
     CaseNode(bool literal, ASTNode *cond, ASTNode *body);
@@ -411,7 +426,7 @@ public:
     llvm::Value *codegen(CodeGenerator &generator) { return generator.codegen(this); };
 };
 
-class DeconsNode : public ASTNode {
+class DeconsNode : public ExprNode {
 public:
     std::string id;
     std::vector<IDNode*> fields;

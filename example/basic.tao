@@ -22,17 +22,30 @@ wuji show(s: @K) {
 
 ::: String = String(c: @Char, n: Int);
 
-yang +>(x: @Real, y: Real): Real = '\n';
+yang +>(x: Real, y: Real): Real = '\n';
 
 yang rand(): Int = M.randint(0, 10);
 
-yang upper(c: Char): Char = c;
+yang upper(c: Char): Char = {
+    |||||: '\x30';
+};
+
+yang *(x: String, y: String): String = x;
 
 wuji main() {
-    yin a: @Real = 0;
-    yin b: Real;
-    yin s: Strin;
-    a +> b
+    yin a: Real = 0;
+    yin b: Real = 5;
+    yin s: String;
+    yin f: |||::| Int;
+    f = f = rand;
+    yin n: Int = :|: a < b && b < 50 :|:|:: 2 :|::|| 0;
+    :|| a < b :|||:: a = a + 0.2 :||||| {
+        :|: 1 :|:|:: 
+            :||:|:;
+    };
+    :||:|| {
+
+    } :||::| a < b :|||:: a = a + 1.1;
 };
 
 '''

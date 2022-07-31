@@ -1,0 +1,41 @@
+#ifndef COLORS_H
+#define COLORS_H
+
+#define CL_FG_BLACK   "\x1b[30m"
+#define CL_FG_DRED    "\x1b[31m"
+#define CL_FG_DGREEN  "\x1b[32m"
+#define CL_FG_DYELLOW "\x1b[33m"
+#define CL_FG_DBLUE   "\x1b[34m"
+#define CL_FG_PURPLE  "\x1b[35m"
+#define CL_FG_AQUA    "\x1b[36m"
+#define CL_FG_BGRAY   "\x1b[37m"
+#define CL_FG_GRAY    "\x1b[90m"
+#define CL_FG_RED     "\x1b[91m"
+#define CL_FG_GREEN   "\x1b[92m"
+#define CL_FG_YELLOW  "\x1b[93m"
+#define CL_FG_BLUE    "\x1b[94m"
+#define CL_FG_MAGENTA "\x1b[95m"
+#define CL_FG_CYAN    "\x1b[96m"
+#define CL_FG_WHITE   "\x1b[97m"
+
+#define CL_BG_BLACK   "\x1b[40m" 
+#define CL_BG_DRED    "\x1b[41m" 
+#define CL_BG_DGREEN  "\x1b[42m" 
+#define CL_BG_DYELLOW "\x1b[43m" 
+#define CL_BG_DBLUE   "\x1b[44m" 
+#define CL_BG_PURPLE  "\x1b[45m" 
+#define CL_BG_AQUA    "\x1b[46m" 
+#define CL_BG_BGRAY   "\x1b[47m" 
+#define CL_BG_GRAY    "\x1b[100m"
+#define CL_BG_RED     "\x1b[101m"
+#define CL_BG_GREEN   "\x1b[102m"
+#define CL_BG_YELLOW  "\x1b[103m"
+#define CL_BG_BLUE    "\x1b[104m"
+#define CL_BG_MAGENTA "\x1b[105m"
+#define CL_BG_CYAN    "\x1b[106m"
+#define CL_BG_WHITE   "\x1b[107m"
+
+#define CL_BOLD "\x1b[1m"
+#define CL_RESET "\x1b[0m"
+
+#endif

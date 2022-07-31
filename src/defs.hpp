@@ -30,6 +30,7 @@ class BreakNode;
 class ContinueNode;
 class ReturnNode;
 class FreeNode;
+class RefNode;
 class UnaryOpNode;
 class BinaryOpNode;
 class BlockNode;

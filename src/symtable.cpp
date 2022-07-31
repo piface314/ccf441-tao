@@ -52,7 +52,7 @@ SymTable::SymTable() {
         for (auto it2 = numeric_types.begin(); it2 != numeric_types.end(); ++it2) {
             std::vector<ASTNode*> params = {
                 new ParamNode("x", new VarTypeNode(*it2, empty)),
-                new ParamNode("y", new VarTypeNode(*it2, empty)),
+                new ParamNode("y", new VarTypeNode(*it2, empty))
             };
             ASTNode *ret = new VarTypeNode(*it2, empty);
             this->install(*it, SymTableEntry(Loc(), new YangNode(*it, params, ret)));
@@ -63,7 +63,7 @@ SymTable::SymTable() {
         for (auto it2 = integer_types.begin(); it2 != integer_types.end(); ++it2) {
             std::vector<ASTNode*> params = {
                 new ParamNode("a", new VarTypeNode(*it2, empty)),
-                new ParamNode("b", new VarTypeNode(*it2, empty)),
+                new ParamNode("b", new VarTypeNode(*it2, empty))
             };
             ASTNode *ret = new VarTypeNode(*it2, empty);
             this->install(*it, SymTableEntry(Loc(), new YangNode(*it, params, ret)));
@@ -72,10 +72,10 @@ SymTable::SymTable() {
 
     for (auto it = logical_ops.begin(); it != logical_ops.end(); ++it) {
         std::vector<ASTNode*> params = {
-            new ParamNode("a", new VarTypeNode("Boolean", empty)),
-            new ParamNode("b", new VarTypeNode("Boolean", empty)),
+            new ParamNode("a", new VarTypeNode("Bool", empty)),
+            new ParamNode("b", new VarTypeNode("Bool", empty))
         };
-        ASTNode *ret = new VarTypeNode("Boolean", empty);
+        ASTNode *ret = new VarTypeNode("Bool", empty);
         this->install(*it, SymTableEntry(Loc(), new YangNode(*it, params, ret)));
     }
 
@@ -83,11 +83,32 @@ SymTable::SymTable() {
         for (auto it2 = types.begin(); it2 != types.end(); ++it2) {
             std::vector<ASTNode*> params = {
                 new ParamNode("a", new VarTypeNode(*it2, empty)),
-                new ParamNode("b", new VarTypeNode(*it2, empty)),
+                new ParamNode("b", new VarTypeNode(*it2, empty))
             };
-            ASTNode *ret = new VarTypeNode(*it2, empty);
+            ASTNode *ret = new VarTypeNode("Bool", empty);
             this->install(*it, SymTableEntry(Loc(), new YangNode(*it, params, ret)));
         }
+    }
+
+    // Negação bitwise
+    for (auto &it : integer_types) {
+        std::vector<ASTNode*> params = { new ParamNode("n", new VarTypeNode(it, empty)) };
+        ASTNode *ret = new VarTypeNode(it, empty);
+        this->install("~", SymTableEntry(Loc(), new YangNode("~", params, ret)));
+    }
+
+    // Negação lógica
+    {
+        std::vector<ASTNode*> params = { new ParamNode("p", new VarTypeNode("Bool", empty)) };
+        ASTNode *ret = new VarTypeNode("Bool", empty);
+        this->install("!", SymTableEntry(Loc(), new YangNode("!", params, ret)));
+    }
+
+    // Negação numérica
+    for (auto &it : numeric_types) {
+        std::vector<ASTNode*> params = { new ParamNode("x", new VarTypeNode(it, empty)) };
+        ASTNode *ret = new VarTypeNode(it, empty);
+        this->install("-", SymTableEntry(Loc(), new YangNode("-", params, ret)));
     }
 }
 
@@ -113,4 +134,16 @@ std::vector<SymTableEntry> *SymTable::lookup(std::string key) {
             return &it->second;
     }
     return NULL;
+}
+
+std::vector<SymTableEntry> *SymTable::lookup_all(std::string key) {
+    std::vector<SymTableEntry> *res = prev ? prev->lookup_all(key) : NULL;
+    auto it = table.find(key);
+    if (it != table.end()) {
+        if (res == NULL)
+            res = new std::vector<SymTableEntry>();
+        for (auto &it2 : it->second)
+            res->push_back(it2);
+    }
+    return res;
 }

@@ -8,6 +8,7 @@
 %{
     #include "symtable.hpp"
     #include "parser.hpp"
+    #include "colors.hpp"
     #define VPUSH(D,V,I) D = V; if(I)V->push_back(I)
     #define VINIT(D,I)   D = new std::vector<ASTNode*>(); if(I)D->push_back(I)
     #define VEMPTY       new std::vector<ASTNode*>()
@@ -24,6 +25,8 @@
     bool with_type_params = false;
     std::vector<std::string> errors;
     std::vector<ASTNode*> empty;
+    std::vector<StmtNode*> loops;
+    std::vector<CallableNode*> procs;
 %}
 
 /* Definições */
@@ -198,7 +201,8 @@ func_def: YANG COM_ID {
         with_type_params = false;
         $$ = new YangNode(*$2, *$5, $8); delete $5;
         env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
-    }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
+        procs.push_back($$);
+    }[def] expr[body] { ENVPOP; procs.pop_back(); $def->set_body($body); $$ = $def; } ;
 
 // Definição de operador (função com identificador de símbolo)
 op_def: YANG sym_id_ {
@@ -210,7 +214,8 @@ op_def: YANG sym_id_ {
         params.push_back($7);
         $$ = new YangNode(*$2, params, $10);
         env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
-    }[def] expr[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
+        procs.push_back($$);
+    }[def] expr[body] { ENVPOP; procs.pop_back(); $def->set_body($body); $$ = $def; } ;
 
 // Definição de procedimento
 proc_def: WUJI COM_ID {
@@ -219,7 +224,8 @@ proc_def: WUJI COM_ID {
         with_type_params = false;
         $$ = new WujiNode(*$2, *$5); delete $5;
         env->prev->install(*$2, SymTableEntry(Loc(@2), $$)); delete $2;
-    }[def] stmt[body] { ENVPOP; $def->set_body($body); $$ = $def; } ;
+        procs.push_back($$);
+    }[def] stmt[body] { ENVPOP; procs.pop_back(); $def->set_body($body); $$ = $def; } ;
 
 param_list: params { $$ = $1; }| { $$ = VEMPTY; } ;
 params: params ',' param { VPUSH($$,$1,$3); }
@@ -257,8 +263,16 @@ stmt: top_stmt { $$ = $1; }
     ;
 
 // Comandos de repetição
-while: TRIG3 expr step HEX31 stmt { $$ = new WhileNode($2, $3, $5); };
-repeat: HEX27 stmt HEX25 expr step { $$ = new RepeatNode($2, $4, $5); };
+while: TRIG3 expr step HEX31 { loops.push_back(new WhileNode()); } stmt {
+        $$ = loops.back();
+        new ($$) WhileNode($2, $3, $6);
+        loops.pop_back();
+    };
+repeat: HEX27 { loops.push_back(new RepeatNode()); } stmt HEX25 expr step {
+        $$ = loops.back();
+        new ($$) RepeatNode($3, $5, $6);
+        loops.pop_back();
+    };
 step: HEX28 stmt { $$ = $2; } | { $$ = NULL; } ;
 
 // Controle de fluxo
@@ -299,10 +313,10 @@ expr: '{' { ENVPUSH; } stmts '}' { ENVPOP; $$ = new BlockNode(*$3); delete $3; }
     | expr QSYM_ID_L7 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
     | expr SYM_ID_R8 expr           { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
     | expr QSYM_ID_R8 expr          { $$ = new BinaryOpNode(*$2, $1, $3); delete $2; }
-    | '@' expr %prec PREFIX         { $$ = new UnaryOpNode("@", $2); }
-    | '~' expr %prec PREFIX         { $$ = new UnaryOpNode("~", $2); }
-    | '!' expr %prec PREFIX         { $$ = new UnaryOpNode("!", $2); }
-    | '-' expr %prec PREFIX         { $$ = new UnaryOpNode("-", $2); }
+    | '~' expr %prec PREFIX         { $$ = new UnaryOpNode('~', $2); }
+    | '!' expr %prec PREFIX         { $$ = new UnaryOpNode('!', $2); }
+    | '-' expr %prec PREFIX         { $$ = new UnaryOpNode('-', $2); }
+    | '@' addr                      { $$ = new RefNode($2); }
     | malloc                        { $$ = $1; }
     | build                         { $$ = $1; }
     | call                          { $$ = $1; }
@@ -426,13 +440,14 @@ literal: INTEGER { $$ = new LiteralNode($1); }
 
 void yyerror(const char *msg) {
     std::stringstream buffer;
-    buffer << yylloc.first_line << ":" << yylloc.first_column << ": syntax unbalance: " << msg;
+    buffer << CL_FG_RED CL_BOLD << yylloc.first_line << ":" << yylloc.first_column
+        << ": syntax unbalance: " CL_RESET << msg;
     errors.push_back(buffer.str());
 }
 
 void yyerror_(const char *msg, YYLTYPE loc) {
     std::stringstream buffer;
-    buffer << loc.first_line << ":" << loc.first_column << ": syntax unbalance: " << msg;
+    buffer << CL_FG_RED CL_BOLD << loc.first_line << ":" << loc.first_column << ": syntax unbalance: " CL_RESET << msg;
     errors.push_back(buffer.str());
 }
 
